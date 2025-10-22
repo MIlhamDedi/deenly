@@ -26,6 +26,7 @@ export interface Journey {
   memberIds: string[]; // array of user uids
   stats: JourneyStats;
   settings: JourneySettings;
+  targetEndDate?: Timestamp; // optional target completion date
 }
 
 export interface JourneyStats {

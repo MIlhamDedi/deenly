@@ -6,6 +6,7 @@ import { useJourneyDetail } from '@/hooks/useJourneyDetail';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LogReadingModal } from '@/components/journey/LogReadingModal';
+import { EditJourneyModal } from '@/components/journey/EditJourneyModal';
 import { SurahProgress } from '@/components/journey/SurahProgress';
 import { formatVerseRange } from '@/lib/verseUtils';
 
@@ -16,6 +17,7 @@ export function JourneyDetail() {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showLogModal, setShowLogModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const { journey, members, readingLogs, loading, error } = useJourneyDetail(id || '');
 
@@ -107,7 +109,18 @@ export function JourneyDetail() {
         {/* Journey Header Card */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-teal-100 dark:border-gray-700 mb-6">
           <div className="bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-800 dark:to-teal-900 p-6 sm:p-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">{journey?.name}</h2>
+            <div className="flex justify-between items-start gap-4 mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white flex-1">{journey?.name}</h2>
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="flex-shrink-0 p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                title="Edit Journey"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </div>
             {journey?.description && (
               <p className="text-teal-100 dark:text-gray-300">{journey.description}</p>
             )}
@@ -200,11 +213,131 @@ export function JourneyDetail() {
           {/* Tab Content */}
           <div className="p-6 sm:p-8">
             {activeTab === 'overview' && (
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Journey Overview</h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Overview content coming soon...
-                </p>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Journey Overview</h3>
+                  {journey.description && (
+                    <p className="text-gray-600 dark:text-gray-400">{journey.description}</p>
+                  )}
+                </div>
+
+                {/* Target Date Section */}
+                {journey.targetEndDate && (() => {
+                  const targetDate = journey.targetEndDate.toDate();
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const targetDateOnly = new Date(targetDate);
+                  targetDateOnly.setHours(0, 0, 0, 0);
+
+                  const daysRemaining = Math.ceil((targetDateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                  const versesRemaining = 6236 - journey.stats.versesCompleted;
+                  const dailyVersesNeeded = daysRemaining > 0 ? Math.ceil(versesRemaining / daysRemaining) : versesRemaining;
+
+                  const isOverdue = daysRemaining < 0;
+                  const isCompleted = journey.stats.versesCompleted >= 6236;
+
+                  return (
+                    <div className="bg-gradient-to-br from-gold-50 to-teal-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 border-2 border-gold-200 dark:border-gold-700">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-gold-600 to-gold-500 rounded-xl flex items-center justify-center shadow-lg">
+                          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Target End Date</h4>
+                          <p className="text-2xl font-bold text-gold-700 dark:text-gold-400">
+                            {targetDate.toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {!isCompleted && (
+                        <div className="grid sm:grid-cols-3 gap-4 mt-6">
+                          <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600">
+                            <p className={`text-3xl font-bold mb-1 ${
+                              isOverdue
+                                ? 'text-red-600 dark:text-red-400'
+                                : daysRemaining <= 7
+                                ? 'text-orange-600 dark:text-orange-400'
+                                : 'text-teal-700 dark:text-teal-400'
+                            }`}>
+                              {isOverdue ? 'Overdue' : daysRemaining}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              {isOverdue ? `by ${Math.abs(daysRemaining)} days` : 'Days Remaining'}
+                            </p>
+                          </div>
+
+                          <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600">
+                            <p className="text-3xl font-bold text-gold-700 dark:text-gold-400 mb-1">
+                              {versesRemaining.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Verses Remaining</p>
+                          </div>
+
+                          <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600">
+                            <p className={`text-3xl font-bold mb-1 ${
+                              isOverdue
+                                ? 'text-red-600 dark:text-red-400'
+                                : dailyVersesNeeded > 100
+                                ? 'text-orange-600 dark:text-orange-400'
+                                : 'text-green-600 dark:text-green-400'
+                            }`}>
+                              {isOverdue ? '—' : dailyVersesNeeded}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              {isOverdue ? 'Target Passed' : 'Verses/Day Needed'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {isCompleted && (
+                        <div className="mt-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-4 text-center">
+                          <p className="text-green-700 dark:text-green-400 font-semibold flex items-center justify-center gap-2">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            Journey Completed! Alhamdulillah!
+                          </p>
+                        </div>
+                      )}
+
+                      {!isCompleted && !isOverdue && daysRemaining <= 7 && (
+                        <div className="mt-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-xl p-3">
+                          <p className="text-sm text-orange-700 dark:text-orange-400 text-center">
+                            ⏰ Less than a week remaining! Keep up the momentum!
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Journey Stats */}
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Statistics</h4>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Members</p>
+                      <p className="text-2xl font-bold text-teal-700 dark:text-teal-400">
+                        {journey.memberIds.length}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Readings Logged</p>
+                      <p className="text-2xl font-bold text-gold-700 dark:text-gold-400">
+                        {readingLogs.length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -338,6 +471,15 @@ export function JourneyDetail() {
         journeyId={id!}
         members={members}
       />
+
+      {/* Edit Journey Modal */}
+      {journey && (
+        <EditJourneyModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          journey={journey}
+        />
+      )}
     </div>
   );
 }
