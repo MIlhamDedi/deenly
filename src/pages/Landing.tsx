@@ -2,9 +2,24 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { useState, useEffect } from 'react';
 
 export function Landing() {
   const { currentUser } = useAuth();
+  const [demoProgress, setDemoProgress] = useState(0);
+
+  // Cycle through demo states every 3 seconds
+  useEffect(() => {
+    const states = [0, 25, 50, 75, 100];
+    let currentIndex = 0;
+
+    const interval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % states.length;
+      setDemoProgress(states[currentIndex]);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-gold-50 dark:from-gray-900 dark:via-gray-800 dark:to-teal-950 transition-colors">
@@ -86,6 +101,219 @@ export function Landing() {
         </div>
       </section>
 
+      {/* How It Works + Live Demo Section */}
+      <section className="py-20 px-4 bg-gradient-to-br from-gray-50 to-teal-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="max-w-6xl mx-auto">
+          {/* How It Works */}
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+              How It Works
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
+              Get started in three simple steps
+            </p>
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-16">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-teal-700 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-lg">
+                  1
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Create a Journey</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Start a journey and invite your group
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-gold-600 to-gold-500 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-lg">
+                  2
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Log Your Readings</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Track which verses you've completed
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-teal-700 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-lg">
+                  3
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Track Progress Together</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Celebrate milestones as a community
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Live Demo */}
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              See It In Action
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Watch how Deenly tracks your Quran reading progress
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Journey Overview Demo */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="bg-gradient-to-r from-teal-700 to-teal-600 p-6">
+                <h3 className="text-2xl font-bold text-white mb-1">Dedi Family Ramadan 2026</h3>
+                <p className="text-teal-100 text-sm">Journey started by Dedi</p>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Animated Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-br from-teal-50 to-white dark:from-teal-900/20 dark:to-gray-700 rounded-xl p-4 text-center border border-teal-200 dark:border-teal-800">
+                    <p className="text-3xl font-bold text-teal-700 dark:text-teal-400">
+                      {Math.round((demoProgress / 100) * 1247)}
+                    </p>
+                    <p className="text-xs text-teal-600 dark:text-teal-500 mt-1">Verses Read</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-gold-50 to-white dark:from-gold-900/20 dark:to-gray-700 rounded-xl p-4 text-center border border-gold-200 dark:border-gold-800">
+                    <p className="text-3xl font-bold text-gold-700 dark:text-gold-400">
+                      {Math.round(demoProgress)}%
+                    </p>
+                    <p className="text-xs text-gold-600 dark:text-gold-500 mt-1">Complete</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-700 rounded-xl p-4 text-center border border-green-200 dark:border-green-800">
+                    <p className="text-3xl font-bold text-green-700 dark:text-green-400">5</p>
+                    <p className="text-xs text-green-600 dark:text-green-500 mt-1">Members</p>
+                  </div>
+                </div>
+
+                {/* Overall Progress Bar */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Overall Progress</p>
+                    <p className="text-sm font-bold text-teal-700 dark:text-teal-400">{demoProgress}%</p>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-teal-500 via-teal-600 to-gold-500 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${demoProgress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Recent Activity */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Recent Activity</h4>
+                  <div className="space-y-2">
+                    {demoProgress > 20 && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 animate-fade-in">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-gold-600 flex items-center justify-center text-white font-bold text-sm">
+                          D
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-900 dark:text-white font-medium">Dedi read Al-Baqarah 1-10</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">2 minutes ago</p>
+                        </div>
+                      </div>
+                    )}
+                    {demoProgress > 50 && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 animate-fade-in">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold-600 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                          R
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-900 dark:text-white font-medium">Rani read Al-Imran 1-20</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">5 minutes ago</p>
+                        </div>
+                      </div>
+                    )}
+                    {demoProgress > 80 && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 animate-fade-in">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                          B
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-900 dark:text-white font-medium">Budi completed An-Nisa!</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">8 minutes ago</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Surah Progress Demo */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="bg-gradient-to-r from-gold-600 to-gold-500 p-6">
+                <h3 className="text-2xl font-bold text-white mb-1">Surah Progress</h3>
+                <p className="text-gold-100 text-sm">Track completion per surah</p>
+              </div>
+
+              <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
+                {/* Demo Surahs */}
+                {[
+                  { number: 1, name: 'Al-Fatihah', arabic: 'الفاتحة', verses: 7, read: Math.min(7, Math.round((demoProgress / 100) * 7)) },
+                  { number: 2, name: 'Al-Baqarah', arabic: 'البقرة', verses: 286, read: Math.min(286, Math.round((demoProgress / 100) * 286)) },
+                  { number: 3, name: 'Al-Imran', arabic: 'آل عمران', verses: 200, read: Math.min(200, Math.round((demoProgress / 100) * 200)) },
+                  { number: 4, name: 'An-Nisa', arabic: 'النساء', verses: 176, read: Math.min(176, Math.round((demoProgress / 100) * 176)) },
+                  { number: 5, name: 'Al-Ma\'idah', arabic: 'المائدة', verses: 120, read: Math.min(120, Math.round((demoProgress / 100) * 120)) },
+                ].map((surah) => {
+                  const percentage = (surah.read / surah.verses) * 100;
+                  const isComplete = percentage === 100;
+                  const isInProgress = percentage > 0 && percentage < 100;
+
+                  return (
+                    <div
+                      key={surah.number}
+                      className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-teal-600 to-gold-600 flex items-center justify-center text-white font-bold shadow-sm">
+                          {surah.number}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h4 className="font-bold text-gray-900 dark:text-white">{surah.name}</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 font-arabic">{surah.arabic}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isComplete && (
+                                <span className="text-green-600 dark:text-green-400">
+                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </span>
+                              )}
+                              <span className="text-lg font-bold text-teal-700 dark:text-teal-400">
+                                {percentage.toFixed(0)}%
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden mb-2">
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${isComplete
+                                ? 'bg-gradient-to-r from-green-500 to-green-600'
+                                : isInProgress
+                                  ? 'bg-gradient-to-r from-teal-500 to-gold-500'
+                                  : 'bg-gray-300 dark:bg-gray-500'
+                                }`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            {surah.read} / {surah.verses} verses
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-20 px-4 bg-white dark:bg-gray-800">
         <div className="max-w-6xl mx-auto">
@@ -130,52 +358,6 @@ export function Landing() {
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                 Log readings for yourself or others. Read out of order. Track exactly which verses are complete.
               </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-20 px-4 bg-gradient-to-br from-teal-50 to-gold-50 dark:from-gray-900 dark:to-gray-800">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-12">
-            How It Works
-          </h2>
-          <div className="space-y-8">
-            <div className="flex gap-6 items-start bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-teal-100 dark:border-teal-700">
-              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-teal-700 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                1
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Create a Journey</h3>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
-                  Start a new reading journey and invite your friends, family, or study group to join.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-6 items-start bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gold-200 dark:border-gold-700">
-              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-gold-600 to-gold-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                2
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Log Your Readings</h3>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
-                  After reading, log which verses you completed. You can read in any order and track who read what.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-6 items-start bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-teal-100 dark:border-teal-700">
-              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-teal-700 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                3
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Track Progress Together</h3>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
-                  Watch your journey's progress grow, celebrate milestones, and stay motivated as a community.
-                </p>
-              </div>
             </div>
           </div>
         </div>
