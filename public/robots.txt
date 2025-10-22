@@ -1,0 +1,6 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap (update when generated)
+Sitemap: https://milhamdedi.github.io/deenly/sitemap.xml
