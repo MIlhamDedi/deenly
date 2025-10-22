@@ -35,7 +35,7 @@ export function Text({ children, variant = 'body', className = '' }: TextProps) 
   const variants = {
     body: 'text-base text-gray-700 dark:text-gray-300',
     muted: 'text-sm text-gray-600 dark:text-gray-400',
-    small: 'text-xs text-gray-500 dark:text-gray-500',
+    small: 'text-xs text-gray-500 dark:text-gray-400',
     large: 'text-lg text-gray-700 dark:text-gray-300',
   };
 

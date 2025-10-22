@@ -46,7 +46,7 @@ export function Login() {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
         {/* Logo & Header */}
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="Deenly" className="w-20 h-20 mx-auto mb-4" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Deenly" className="w-20 h-20 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-teal-900 mb-2">
             Welcome to Deenly
           </h1>

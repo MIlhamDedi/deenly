@@ -114,7 +114,7 @@ export function CreateJourneyModal({ isOpen, onClose, onSuccess }: CreateJourney
         />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Description (Optional)
           </label>
           <textarea
@@ -123,19 +123,19 @@ export function CreateJourneyModal({ isOpen, onClose, onSuccess }: CreateJourney
             onChange={(e) => setDescription(e.target.value)}
             disabled={loading}
             rows={3}
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 focus:outline-none disabled:bg-gray-50 disabled:cursor-not-allowed transition-colors resize-none"
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors resize-none"
           />
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Optional: Add details about this reading journey
           </p>
         </div>
 
-        <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+        <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-teal-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 text-teal-600 dark:text-teal-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <div className="text-sm text-teal-800">
+            <div className="text-sm text-teal-800 dark:text-teal-200">
               <p className="font-semibold mb-1">What happens next?</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>You'll be able to invite others to join</li>

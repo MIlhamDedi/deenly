@@ -51,14 +51,14 @@ export function JourneyCard({ journey }: JourneyCardProps) {
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Verses Read</p>
               <p className="text-lg font-bold text-gray-900 dark:text-white">
                 {journey.stats.versesCompleted.toLocaleString()}
-                <span className="text-sm text-gray-400 dark:text-gray-500 font-normal"> / 6,236</span>
+                <span className="text-sm text-gray-400 dark:text-gray-400 font-normal"> / 6,236</span>
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Members</p>
               <p className="text-lg font-bold text-gray-900 dark:text-white">
                 {journey.memberIds.length}
-                <svg className="w-4 h-4 inline ml-1 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 inline ml-1 text-gray-400 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </p>
@@ -79,7 +79,7 @@ export function JourneyCard({ journey }: JourneyCardProps) {
             View Journey
           </span>
           <svg
-            className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-teal-600 dark:group-hover:text-teal-400 group-hover:translate-x-1 transition-all"
+            className="w-5 h-5 text-gray-400 dark:text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 group-hover:translate-x-1 transition-all"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

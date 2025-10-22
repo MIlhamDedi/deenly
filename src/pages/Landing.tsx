@@ -12,10 +12,10 @@ export function Landing() {
       <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <img src="/logo.png" alt="Deenly" className="w-8 h-8 sm:w-10 sm:h-10" />
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Deenly" className="w-8 h-8 sm:w-10 sm:h-10" />
               <span className="text-xl sm:text-2xl font-bold text-teal-900 dark:text-teal-100">Deenly</span>
-            </div>
+            </Link>
             <div className="flex items-center gap-2 sm:gap-3">
               <ThemeToggle />
               {currentUser ? (
@@ -46,7 +46,7 @@ export function Landing() {
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto text-center">
-          <img src="/logo.png" alt="Deenly" className="w-32 h-32 mx-auto mb-8 drop-shadow-xl" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Deenly" className="w-32 h-32 mx-auto mb-8 drop-shadow-xl" />
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             Complete Your Quran Journey
             <span className="block bg-gradient-to-r from-gold-600 to-gold-500 bg-clip-text text-transparent mt-2">Together</span>

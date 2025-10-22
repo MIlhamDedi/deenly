@@ -135,7 +135,7 @@ export function JourneyDetail() {
                 <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                   {journey?.stats.versesCompleted.toLocaleString() || 0}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500">of 6,236</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">of 6,236</p>
               </div>
               <div className="text-center p-4 bg-gold-50 dark:bg-gray-700 rounded-xl">
                 <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Members</p>
@@ -217,7 +217,7 @@ export function JourneyDetail() {
                       </svg>
                     </div>
                     <p className="text-gray-600 dark:text-gray-400">No activity yet</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">Start logging readings to see activity here</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Start logging readings to see activity here</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -254,7 +254,7 @@ export function JourneyDetail() {
                             "{log.note}"
                           </p>
                         )}
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           Logged by {log.loggedByName}
                         </p>
                       </div>
