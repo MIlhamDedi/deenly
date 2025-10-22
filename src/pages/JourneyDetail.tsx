@@ -6,9 +6,10 @@ import { useJourneyDetail } from '@/hooks/useJourneyDetail';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LogReadingModal } from '@/components/journey/LogReadingModal';
+import { SurahProgress } from '@/components/journey/SurahProgress';
 import { formatVerseRange } from '@/lib/verseUtils';
 
-type TabType = 'overview' | 'activity' | 'members';
+type TabType = 'overview' | 'progress' | 'activity' | 'members';
 
 export function JourneyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -60,6 +61,7 @@ export function JourneyDetail() {
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'overview', label: 'Overview' },
+    { id: 'progress', label: 'Progress' },
     { id: 'activity', label: 'Activity' },
     { id: 'members', label: 'Members' },
   ];
@@ -203,6 +205,13 @@ export function JourneyDetail() {
                 <p className="text-gray-600 dark:text-gray-400">
                   Overview content coming soon...
                 </p>
+              </div>
+            )}
+
+            {activeTab === 'progress' && (
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Surah Progress</h3>
+                <SurahProgress readingLogs={readingLogs} />
               </div>
             )}
 
