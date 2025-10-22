@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,6 +13,8 @@ export function SignUp() {
   const [loading, setLoading] = useState(false);
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/app';
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -35,7 +37,7 @@ export function SignUp() {
 
     try {
       await signUp(email, password, displayName);
-      navigate('/app');
+      navigate(redirect);
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -49,7 +51,7 @@ export function SignUp() {
 
     try {
       await signInWithGoogle();
-      navigate('/app');
+      navigate(redirect);
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Google');
     } finally {

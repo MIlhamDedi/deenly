@@ -391,12 +391,12 @@ export function Landing() {
             &copy; 2025 Deenly. Track your Quran reading journey together.
           </p>
           <p className="text-sm text-gray-400 dark:text-gray-600 mt-2 italic">
-            Made with <span className="text-red-500 animate-pulse">♥</span> for{' '}
+            Made with <span className="text-red-500 animate-pulse">♥</span> by{' '}
             <span
               className="font-semibold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent hover:from-pink-600 hover:to-rose-600 transition-all cursor-default"
-              title="To my amazing partner in jannah, Rani - may this app help us complete many Quran journeys together ✨"
+              title="To my amazing partner in jannah - may this app help us complete many Quran journeys together ✨"
             >
-              My Rani
+              Dedi & Rani
             </span>
           </p>
         </div>

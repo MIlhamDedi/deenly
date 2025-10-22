@@ -2,15 +2,15 @@
   "name": "Deenly - Quran Reading Tracker",
   "short_name": "Deenly",
   "description": "Track your Quran reading journey with friends and family",
-  "start_url": "/deenly/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0f766e",
   "orientation": "portrait",
-  "scope": "/deenly/",
+  "scope": "./",
   "icons": [
     {
-      "src": "/deenly/logo.png",
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

@@ -18,6 +18,7 @@ export function JourneyDetail() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showLogModal, setShowLogModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { journey, members, readingLogs, loading, error } = useJourneyDetail(id || '');
 
@@ -26,6 +27,18 @@ export function JourneyDetail() {
       await signOut();
     } catch (error) {
       console.error('Failed to sign out:', error);
+    }
+  }
+
+  async function handleShareInvite() {
+    const inviteUrl = `${window.location.origin}${import.meta.env.BASE_URL}join?journey=${id}`;
+
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy invite link:', err);
     }
   }
 
@@ -413,6 +426,33 @@ export function JourneyDetail() {
                   <span className="text-sm text-gray-600 dark:text-gray-400">
                     {members.length} {members.length === 1 ? 'member' : 'members'}
                   </span>
+                </div>
+
+                {/* Invite Link Section */}
+                <div className="mb-6 bg-gradient-to-br from-teal-50 to-gold-50 dark:from-teal-900/20 dark:to-gold-900/20 border-2 border-teal-200 dark:border-teal-700 rounded-xl p-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-teal-600 to-gold-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Invite Others</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Share this link with friends and family to invite them to join this journey
+                      </p>
+                      <Button
+                        variant="primary"
+                        onClick={handleShareInvite}
+                        className="w-full sm:w-auto"
+                      >
+                        <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                        </svg>
+                        {copied ? '✓ Link Copied!' : 'Copy Invite Link'}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
                 {members.length === 0 ? (
                   <div className="text-center py-12">

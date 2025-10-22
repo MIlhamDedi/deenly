@@ -6,6 +6,7 @@ import { Login } from '@/pages/Login';
 import { SignUp } from '@/pages/SignUp';
 import { AppPage } from '@/pages/App';
 import { JourneyDetail } from '@/pages/JourneyDetail';
+import { JoinJourney } from '@/pages/JoinJourney';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/join" element={<JoinJourney />} />
 
           {/* Protected Routes */}
           <Route

@@ -36,9 +36,21 @@ service cloud.firestore {
       // Anyone authenticated can read any journey (simplified for now)
       allow read: if isSignedIn();
 
-      // Only journey creator can update or delete
-      allow update: if isSignedIn() &&
-        resource.data.createdBy == request.auth.uid;
+      // Allow updates if:
+      // 1. User is the creator (can update anything), OR
+      // 2. User is adding themselves to memberIds (joining the journey)
+      allow update: if isSignedIn() && (
+        // Creator can update anything
+        resource.data.createdBy == request.auth.uid ||
+        // OR user is joining (only adding their UID to memberIds)
+        (
+          request.resource.data.memberIds.hasAll(resource.data.memberIds) &&
+          request.resource.data.memberIds.hasOnly([request.auth.uid].concat(resource.data.memberIds)) &&
+          request.auth.uid in request.resource.data.memberIds &&
+          !(request.auth.uid in resource.data.memberIds)
+        )
+      );
+
       allow delete: if isSignedIn() &&
         resource.data.createdBy == request.auth.uid;
 

@@ -5,10 +5,27 @@
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- Single Page Apps for GitHub Pages -->
+    <script>
+      // https://github.com/rafgraph/spa-github-pages
+      // This script checks to see if a redirect is present in the query string,
+      // converts it back into the correct url and adds it to the browser history
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) {
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+            l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+
     <!-- Primary Meta Tags -->
-    <title>Deenly - Quran Reading Tracker | Track Your Journey Together</title>
-    <meta name="title" content="Deenly - Quran Reading Tracker | Track Your Journey Together" />
-    <meta name="description" content="Deenly helps Muslims track their Quran reading journey together. Create reading journeys, invite friends and family, and collectively work towards completing all 6,236 verses of the Quran." />
+    <title>Deenly - Complete the Quran Together</title>
+    <meta name="title" content="Deenly - Complete the Quran Together" />
+    <meta name="description" content="Join a Quran reading journey! Track progress with friends & family as you collectively complete all 6,236 verses. Start your journey today." />
     <meta name="keywords" content="Quran tracker, Quran reading, Islamic app, Quran journey, Muslim app, track Quran progress, collaborative Quran reading, Quran with friends" />
     <meta name="author" content="Deenly" />
     <meta name="theme-color" content="#0f766e" />
@@ -16,19 +33,25 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://milhamdedi.github.io/deenly/" />
-    <meta property="og:title" content="Deenly - Quran Reading Tracker | Track Your Journey Together" />
-    <meta property="og:description" content="Track your Quran reading journey with friends and family. Create journeys, log readings, and collectively work towards completing all 6,236 verses." />
+    <meta property="og:title" content="Deenly - Complete the Quran Together" />
+    <meta property="og:description" content="Track your Quran reading journey with friends and family. Create journeys, log readings, and collectively work towards completing all 6,236 verses of the Quran. 📖✨" />
     <meta property="og:image" content="https://milhamdedi.github.io/deenly/logo.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Deenly - Quran Reading Tracker" />
     <meta property="og:site_name" content="Deenly" />
+    <meta property="og:locale" content="en_US" />
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://milhamdedi.github.io/deenly/" />
-    <meta property="twitter:title" content="Deenly - Quran Reading Tracker | Track Your Journey Together" />
-    <meta property="twitter:description" content="Track your Quran reading journey with friends and family. Create journeys, log readings, and collectively work towards completing all 6,236 verses." />
-    <meta property="twitter:image" content="https://milhamdedi.github.io/deenly/logo.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:url" content="https://milhamdedi.github.io/deenly/" />
+    <meta name="twitter:title" content="Deenly - Complete the Quran Together" />
+    <meta name="twitter:description" content="Track your Quran reading journey with friends and family. Create journeys, log readings, and collectively work towards completing all 6,236 verses of the Quran. 📖✨" />
+    <meta name="twitter:image" content="https://milhamdedi.github.io/deenly/logo.png" />
+    <meta name="twitter:image:alt" content="Deenly - Quran Reading Tracker" />
 
     <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Deenly" />
