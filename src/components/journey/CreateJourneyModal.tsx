@@ -42,6 +42,8 @@ export function CreateJourneyModal({ isOpen, onClose, onSuccess }: CreateJourney
           versesCompleted: 0,
           completionPercentage: 0,
           lastActivityAt: serverTimestamp() as any,
+          versesReadToday: 0,
+          todayDate: serverTimestamp() as any,
         },
         settings: {
           isPrivate: false,

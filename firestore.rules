@@ -38,10 +38,16 @@ service cloud.firestore {
 
       // Allow updates if:
       // 1. User is the creator (can update anything), OR
-      // 2. User is adding themselves to memberIds (joining the journey)
+      // 2. User is adding themselves to memberIds (joining the journey), OR
+      // 3. User is a member updating stats (for logging readings)
       allow update: if isSignedIn() && (
         // Creator can update anything
         resource.data.createdBy == request.auth.uid ||
+        // OR user is a member updating only the stats field
+        (
+          request.auth.uid in resource.data.memberIds &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stats', 'updatedAt'])
+        ) ||
         // OR user is joining (only adding their UID to memberIds)
         (
           request.resource.data.memberIds.hasAll(resource.data.memberIds) &&

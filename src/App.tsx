@@ -32,7 +32,7 @@ function App() {
             }
           />
           <Route
-            path="/journey/:id"
+            path="/app/journey/:id"
             element={
               <ProtectedRoute>
                 <JourneyDetail />

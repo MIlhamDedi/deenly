@@ -28,19 +28,10 @@ export function JourneyCard({ journey }: JourneyCardProps) {
       }
     }
 
-    // Also check lastActivityAt for the activity badge
-    const hasActivityToday = journey.stats.lastActivityAt
-      ? (() => {
-          const lastActivityDate = journey.stats.lastActivityAt.toDate();
-          lastActivityDate.setHours(0, 0, 0, 0);
-          return lastActivityDate.getTime() === today.getTime();
-        })()
-      : false;
-
-    return { versesReadToday, hasActivityToday };
+    return { versesReadToday };
   })();
 
-  const { versesReadToday, hasActivityToday } = todayInfo;
+  const { versesReadToday } = todayInfo;
 
   // Calculate target date info if it exists
   const targetDateInfo = journey.targetEndDate
@@ -72,7 +63,7 @@ export function JourneyCard({ journey }: JourneyCardProps) {
     : null;
 
   return (
-    <Link to={`/journey/${journey.id}`}>
+    <Link to={`/app/journey/${journey.id}`}>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-teal-100 dark:border-gray-700 hover:border-teal-300 dark:hover:border-teal-600 group">
         {/* Header with gradient */}
         <div className="bg-gradient-to-r from-teal-700 to-teal-600 dark:from-teal-800 dark:to-teal-900 p-6 text-white">

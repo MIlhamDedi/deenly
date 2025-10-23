@@ -21,7 +21,7 @@ export function NotificationBanner() {
     // 1. Notifications are supported
     // 2. User hasn't enabled daily reminders
     // 3. Permission is not denied
-    const { denied, granted } = getNotificationPermission();
+    const { denied } = getNotificationPermission();
     const shouldShow =
       isNotificationSupported() &&
       !userProfile.settings.dailyReminder &&

@@ -89,12 +89,12 @@ export function JoinJourney() {
 
   // Redirect if already a member
   if (alreadyMember && id) {
-    return <Navigate to={`/journey/${id}`} replace />;
+    return <Navigate to={`/app/journey/${id}`} replace />;
   }
 
   // Redirect if successfully joined
   if (joined && id) {
-    return <Navigate to={`/journey/${id}`} replace />;
+    return <Navigate to={`/app/journey/${id}`} replace />;
   }
 
   if (loading) {

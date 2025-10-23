@@ -11,6 +11,7 @@ export function PersonalStatsBanner() {
   const stats = userProfile.stats || {
     currentStreak: 0,
     todayVersesRead: 0,
+    todayDate: undefined,
   };
 
   // Check if todayDate is actually today

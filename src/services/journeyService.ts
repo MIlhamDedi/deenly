@@ -120,7 +120,7 @@ export async function logReading(input: LogReadingInput): Promise<void> {
   await updatePersonalStats(selectedUserIds, verseCount);
 
   // 6. Update member stats in the journey's members subcollection
-  await updateJourneyMemberStats(journeyId, selectedUserIds, allVerses);
+  await updateJourneyMemberStats(journeyId, selectedUserIds);
 }
 
 /**
@@ -173,8 +173,7 @@ async function updatePersonalStats(userIds: string[], verseCount: number): Promi
  */
 async function updateJourneyMemberStats(
   journeyId: string,
-  userIds: string[],
-  newVerses: string[]
+  userIds: string[]
 ): Promise<void> {
   for (const userId of userIds) {
     // Get all reading logs for this user in this journey
