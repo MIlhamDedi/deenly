@@ -16,6 +16,7 @@ export interface UserSettings {
   emailUpdates: boolean;
   dailyReminder: boolean; // opt-in for 7pm daily reading reminder
   reminderTime?: string; // stored as "19:00" (24-hour format), defaults to 7pm
+  dailyGoal: number; // daily verses goal (default 50)
 }
 
 export interface UserStats {

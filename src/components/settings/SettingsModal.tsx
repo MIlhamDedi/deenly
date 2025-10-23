@@ -15,12 +15,21 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
+type TabType = 'goal' | 'notifications';
+
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { currentUser, userProfile } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>('goal');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Goal settings
+  const [dailyGoal, setDailyGoal] = useState(
+    userProfile?.settings.dailyGoal || 50
+  );
+
+  // Notification settings
   const [dailyReminder, setDailyReminder] = useState(
     userProfile?.settings.dailyReminder || false
   );
@@ -54,6 +63,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       // Update settings in Firestore
       const userRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userRef, {
+        'settings.dailyGoal': dailyGoal,
         'settings.dailyReminder': dailyReminder,
         'settings.reminderTime': reminderTime,
       });
@@ -74,6 +84,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     if (!loading) {
       setError('');
       setSuccess('');
+      setDailyGoal(userProfile?.settings.dailyGoal || 50);
       setDailyReminder(userProfile?.settings.dailyReminder || false);
       setReminderTime(userProfile?.settings.reminderTime || '19:00');
       onClose();
@@ -95,20 +106,113 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
         )}
 
-        {!notificationSupported && (
-          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-yellow-700 dark:text-yellow-400 text-sm">
-            Notifications are not supported in your browser
+        {/* Tab Navigation */}
+        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={() => setActiveTab('goal')}
+            className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+              activeTab === 'goal'
+                ? 'text-teal-600 dark:text-teal-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Goal
+            {activeTab === 'goal' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-600 dark:bg-teal-400" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('notifications')}
+            className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+              activeTab === 'notifications'
+                ? 'text-teal-600 dark:text-teal-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Notifications
+            {activeTab === 'notifications' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-600 dark:bg-teal-400" />
+            )}
+          </button>
+        </div>
+
+        {/* Goal Tab */}
+        {activeTab === 'goal' && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Daily Reading Goal
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Daily Verses Target
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="6236"
+                    value={dailyGoal}
+                    onChange={(e) => setDailyGoal(Math.max(1, parseInt(e.target.value) || 1))}
+                    disabled={loading}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Set your daily reading target (1-6,236 verses)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Info Box */}
+            <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 text-teal-600 dark:text-teal-400 mt-0.5 flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div className="text-sm text-teal-800 dark:text-teal-200">
+                  <p className="font-semibold mb-1">About Daily Goals</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>Your goal will be displayed in your personal stats banner</li>
+                    <li>Journey cards will show your progress towards this daily target</li>
+                    <li>This is a personal setting and won't affect other journey members</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {notificationPermission.denied && (
-          <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg text-orange-700 dark:text-orange-400 text-sm">
-            Notification permission was denied. Please enable notifications in your browser settings
-            to use daily reminders.
-          </div>
-        )}
+        {/* Notifications Tab */}
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            {!notificationSupported && (
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-yellow-700 dark:text-yellow-400 text-sm">
+                Notifications are not supported in your browser
+              </div>
+            )}
 
-        {/* Daily Reminder Toggle */}
+            {notificationPermission.denied && (
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg text-orange-700 dark:text-orange-400 text-sm">
+                Notification permission was denied. Please enable notifications in your browser settings
+                to use daily reminders.
+              </div>
+            )}
+
+            {/* Daily Reminder Toggle */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Notifications
@@ -152,34 +256,36 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
           </div>
-        </div>
+            </div>
 
-        {/* Info Box */}
-        <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <svg
-              className="w-5 h-5 text-teal-600 dark:text-teal-400 mt-0.5 flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div className="text-sm text-teal-800 dark:text-teal-200">
-              <p className="font-semibold mb-1">About Daily Reminders</p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>Notifications work best when the app is open or in the background</li>
-                <li>You won't receive a notification if you've already logged reading for the day</li>
-                <li>Make sure notifications are enabled in your browser settings</li>
-              </ul>
+            {/* Info Box */}
+            <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 text-teal-600 dark:text-teal-400 mt-0.5 flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div className="text-sm text-teal-800 dark:text-teal-200">
+                  <p className="font-semibold mb-1">About Daily Reminders</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>Notifications work best when the app is open or in the background</li>
+                    <li>You won't receive a notification if you've already logged reading for the day</li>
+                    <li>Make sure notifications are enabled in your browser settings</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3 pt-4">

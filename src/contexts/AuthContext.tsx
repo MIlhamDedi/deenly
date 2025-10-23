@@ -57,6 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           emailUpdates: true,
           dailyReminder: false, // default to off, user can opt-in
           reminderTime: '19:00', // default to 7pm
+          dailyGoal: 50, // default daily verses target
         },
       };
 

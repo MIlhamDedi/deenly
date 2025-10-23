@@ -31,6 +31,19 @@ export function VerseRangePicker({ onRangeChange, disabled = false }: VerseRange
     }
   }, [endSurah, endSurahData]);
 
+  // Auto-adjust end verse when start verse changes (prevent reading backwards)
+  useEffect(() => {
+    // Check if end is before start
+    if (startSurah > endSurah) {
+      // Start surah is after end surah - update end to match start
+      setEndSurah(startSurah);
+      setEndVerse(startVerse);
+    } else if (startSurah === endSurah && startVerse > endVerse) {
+      // Same surah but start verse is after end verse - update end verse
+      setEndVerse(startVerse);
+    }
+  }, [startSurah, startVerse, endSurah, endVerse]);
+
   // Validate and notify parent of changes
   useEffect(() => {
     const startRef = `${startSurah}:${startVerse}`;

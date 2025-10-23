@@ -7,6 +7,9 @@ import {
   increment,
   getDoc,
   writeBatch,
+  query,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ReadingLog, JourneyMember } from '@/types';
@@ -115,6 +118,9 @@ export async function logReading(input: LogReadingInput): Promise<void> {
 
   // 5. Update personal stats for users who participated in this reading
   await updatePersonalStats(selectedUserIds, verseCount);
+
+  // 6. Update member stats in the journey's members subcollection
+  await updateJourneyMemberStats(journeyId, selectedUserIds, allVerses);
 }
 
 /**
@@ -157,6 +163,44 @@ async function updatePersonalStats(userIds: string[], verseCount: number): Promi
         'stats.lastReadDate': serverTimestamp(),
         'stats.todayVersesRead': todayVerses,
         'stats.todayDate': serverTimestamp(),
+      });
+    }
+  }
+}
+
+/**
+ * Update journey member stats by calculating unique verses from all their reading logs
+ */
+async function updateJourneyMemberStats(
+  journeyId: string,
+  userIds: string[],
+  newVerses: string[]
+): Promise<void> {
+  for (const userId of userIds) {
+    // Get all reading logs for this user in this journey
+    const logsQuery = query(
+      collection(db, 'journeys', journeyId, 'readingLogs'),
+      where('readBy', 'array-contains', userId)
+    );
+    const logsSnapshot = await getDocs(logsQuery);
+
+    // Collect all unique verses from all logs
+    const allUniqueVerses = new Set<string>();
+    for (const logDoc of logsSnapshot.docs) {
+      const log = logDoc.data() as ReadingLog;
+      const verses = expandVerseRange(log.startRef, log.endRef);
+      verses.forEach((verse) => allUniqueVerses.add(verse));
+    }
+
+    // Update member stats with the calculated unique verse count
+    const memberRef = doc(db, 'journeys', journeyId, 'members', userId);
+    const memberDoc = await getDoc(memberRef);
+
+    if (memberDoc.exists()) {
+      await updateDoc(memberRef, {
+        'stats.versesRead': allUniqueVerses.size,
+        'stats.lastReadAt': serverTimestamp(),
+        'stats.totalReadings': logsSnapshot.size,
       });
     }
   }
