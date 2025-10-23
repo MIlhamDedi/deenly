@@ -8,11 +8,22 @@ export interface User {
   photoURL?: string;
   createdAt: Timestamp;
   settings: UserSettings;
+  stats?: UserStats; // personal reading stats
 }
 
 export interface UserSettings {
   notifications: boolean;
   emailUpdates: boolean;
+}
+
+export interface UserStats {
+  currentStreak: number; // consecutive days with readings
+  longestStreak: number; // best streak record
+  totalVersesRead: number; // total verses read across all journeys
+  totalReadings: number; // total number of readings logged
+  lastReadDate?: Timestamp; // last date they logged a reading
+  todayVersesRead: number; // verses read today
+  todayDate?: Timestamp; // date for today's count (to reset daily)
 }
 
 // Journey (Reading Group) types

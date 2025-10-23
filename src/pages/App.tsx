@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { CreateJourneyModal } from '@/components/journey/CreateJourneyModal';
 import { JourneyCard } from '@/components/journey/JourneyCard';
+import { PersonalStatsBanner } from '@/components/user/PersonalStatsBanner';
 
 export function AppPage() {
   const { userProfile, signOut } = useAuth();
@@ -45,14 +46,19 @@ export function AppPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
+        {/* Personal Stats Banner */}
         <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Your Reading Journeys
+          <PersonalStatsBanner />
+        </div>
+
+        {/* Journeys Section Header */}
+        <div className="mb-6">
+          <div className="flex justify-between items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
+                Your Journeys
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-xs sm:text-base text-gray-600 dark:text-gray-400 hidden sm:block">
                 {journeys.length === 0
                   ? 'Create your first journey to get started'
                   : `Managing ${journeys.length} ${journeys.length === 1 ? 'journey' : 'journeys'}`}
@@ -61,12 +67,14 @@ export function AppPage() {
             <Button
               variant="primary"
               onClick={() => setShowCreateModal(true)}
-              className="shadow-lg"
+              size="sm"
+              className="shadow-lg whitespace-nowrap"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              New Journey
+              <span className="hidden sm:inline">New Journey</span>
+              <span className="sm:hidden">New</span>
             </Button>
           </div>
         </div>
