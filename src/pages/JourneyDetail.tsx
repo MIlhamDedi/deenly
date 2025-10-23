@@ -336,20 +336,32 @@ export function JourneyDetail() {
                 })()}
 
                 {/* Journey Stats */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Statistics</h4>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Members</p>
-                      <p className="text-2xl font-bold text-teal-700 dark:text-teal-400">
+                <div className="bg-gradient-to-br from-teal-50 to-gray-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 border border-teal-100 dark:border-gray-700">
+                  <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-4">Journey Statistics</h4>
+                  <div className="grid grid-cols-2 md:flex md:flex-row gap-4">
+                    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:flex-1">
+                      <p className="text-3xl font-bold text-teal-700 dark:text-teal-400 mb-1">
+                        {journey.stats.versesCompleted.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Verses Completed</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:flex-1">
+                      <p className="text-3xl font-bold text-gold-700 dark:text-gold-400 mb-1">
+                        {((journey.stats.versesCompleted / 6236) * 100).toFixed(1)}%
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Progress</p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:flex-1">
+                      <p className="text-3xl font-bold text-purple-700 dark:text-purple-400 mb-1">
                         {journey.memberIds.length}
                       </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Members</p>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Readings Logged</p>
-                      <p className="text-2xl font-bold text-gold-700 dark:text-gold-400">
+                    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:flex-1">
+                      <p className="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-1">
                         {readingLogs.length}
                       </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Readings</p>
                     </div>
                   </div>
                 </div>

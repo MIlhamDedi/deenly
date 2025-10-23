@@ -3,10 +3,10 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { VerseRangePicker } from './VerseRangePicker';
 import { useAuth } from '@/hooks/useAuth';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { JourneyMember, ReadingLog } from '@/types';
-import { calculateVerseCount } from '@/lib/verseUtils';
+import { calculateVerseCount, expandVerseRange } from '@/lib/verseUtils';
 
 interface LogReadingModalProps {
   isOpen: boolean;
@@ -81,11 +81,62 @@ export function LogReadingModal({
         startRef,
         endRef,
         timestamp: serverTimestamp() as any,
-        note: note.trim() || undefined,
         verseCount,
+        ...(note.trim() && { note: note.trim() }), // Only include note if it has a value
       };
 
       await addDoc(collection(db, 'journeys', journeyId, 'readingLogs'), logData);
+
+      // Track unique verses and update journey stats
+      const allVerses = expandVerseRange(startRef, endRef);
+
+      // Check which verses are already completed
+      const newVerses: string[] = [];
+      for (const verseRef of allVerses) {
+        const verseDocRef = doc(db, 'journeys', journeyId, 'verseCompletions', verseRef);
+        const verseDoc = await getDoc(verseDocRef);
+
+        if (!verseDoc.exists()) {
+          newVerses.push(verseRef);
+        }
+      }
+
+      // Only proceed if there are new verses to track
+      if (newVerses.length > 0) {
+        const batch = writeBatch(db);
+
+        // Add verseCompletion documents for new verses
+        newVerses.forEach((verseRef) => {
+          const verseDocRef = doc(db, 'journeys', journeyId, 'verseCompletions', verseRef);
+          batch.set(verseDocRef, {
+            verseRef,
+            completedAt: serverTimestamp(),
+            completedBy: readByNames,
+          });
+        });
+
+        // Update journey stats with only new verse count
+        const journeyRef = doc(db, 'journeys', journeyId);
+        batch.update(journeyRef, {
+          'stats.versesCompleted': increment(newVerses.length),
+          'stats.completionPercentage': increment((newVerses.length / 6236) * 100),
+          'stats.lastActivityAt': serverTimestamp(),
+        });
+
+        await batch.commit();
+      } else {
+        // Still update lastActivityAt even if no new verses
+        const journeyRef = doc(db, 'journeys', journeyId);
+        await updateDoc(journeyRef, {
+          'stats.lastActivityAt': serverTimestamp(),
+        });
+      }
+
+      // Show feedback about duplicates
+      const duplicateCount = allVerses.length - newVerses.length;
+      if (duplicateCount > 0) {
+        console.log(`Note: ${duplicateCount} ${duplicateCount === 1 ? 'verse was' : 'verses were'} already completed and not counted again.`);
+      }
 
       // Reset form
       setStartRef('1:1');
