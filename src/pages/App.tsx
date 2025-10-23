@@ -1,48 +1,25 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { useJourneys } from '@/hooks/useJourneys';
+import { useNotifications } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/Button';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { CreateJourneyModal } from '@/components/journey/CreateJourneyModal';
 import { JourneyCard } from '@/components/journey/JourneyCard';
 import { PersonalStatsBanner } from '@/components/user/PersonalStatsBanner';
+import { SettingsModal } from '@/components/settings/SettingsModal';
+import { AppNavbar } from '@/components/navigation/AppNavbar';
 
 export function AppPage() {
-  const { userProfile, signOut } = useAuth();
   const { journeys, loading } = useJourneys();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  async function handleSignOut() {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Failed to sign out:', error);
-    }
-  }
+  // Set up notification scheduling
+  useNotifications();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-gold-50/30 to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-teal-950">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-teal-900 to-teal-800 dark:from-gray-900 dark:to-gray-800 shadow-lg border-b border-teal-700 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
-            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Deenly" className="w-8 h-8 sm:w-10 sm:h-10" />
-            <div>
-              <h1 className="text-lg sm:text-2xl font-bold text-white">Deenly</h1>
-              <p className="text-xs sm:text-sm text-gold-200 dark:text-gray-400 hidden sm:block">Welcome back, {userProfile?.displayName}!</p>
-            </div>
-          </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="bg-white/10 p-1 rounded-lg">
-              <ThemeToggle />
-            </div>
-            <Button variant="outline" size="sm" onClick={handleSignOut} className="border-gold-300 dark:border-gray-600 text-white hover:bg-teal-800 dark:hover:bg-gray-700 text-xs sm:text-sm px-2 sm:px-3">
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
+      <AppNavbar onOpenSettings={() => setShowSettingsModal(true)} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -122,6 +99,12 @@ export function AppPage() {
       <CreateJourneyModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
       />
     </div>
   );

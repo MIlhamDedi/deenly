@@ -1,34 +1,27 @@
 import { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { useAuth } from '@/hooks/useAuth';
 import { useJourneyDetail } from '@/hooks/useJourneyDetail';
 import { Button } from '@/components/ui/Button';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LogReadingModal } from '@/components/journey/LogReadingModal';
 import { EditJourneyModal } from '@/components/journey/EditJourneyModal';
 import { SurahProgress } from '@/components/journey/SurahProgress';
+import { SettingsModal } from '@/components/settings/SettingsModal';
+import { HamburgerMenu } from '@/components/navigation/HamburgerMenu';
+import { NotificationsDropdown } from '@/components/navigation/NotificationsDropdown';
 import { formatVerseRange } from '@/lib/verseUtils';
 
 type TabType = 'overview' | 'progress' | 'activity' | 'members';
 
 export function JourneyDetail() {
   const { id } = useParams<{ id: string }>();
-  const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showLogModal, setShowLogModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const { journey, members, readingLogs, loading, error } = useJourneyDetail(id || '');
-
-  async function handleSignOut() {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Failed to sign out:', error);
-    }
-  }
 
   async function handleShareInvite() {
     const inviteUrl = `${window.location.origin}${import.meta.env.BASE_URL}join?journey=${id}`;
@@ -100,18 +93,9 @@ export function JourneyDetail() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="bg-white/10 p-1 rounded-lg">
-                <ThemeToggle />
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSignOut}
-                className="border-gold-300 dark:border-gray-600 text-white hover:bg-teal-800 dark:hover:bg-gray-700 text-xs sm:text-sm px-2 sm:px-3"
-              >
-                Sign Out
-              </Button>
+            <div className="flex items-center gap-2">
+              <NotificationsDropdown />
+              <HamburgerMenu onOpenSettings={() => setShowSettingsModal(true)} />
             </div>
           </div>
         </div>
@@ -534,6 +518,12 @@ export function JourneyDetail() {
           journey={journey}
         />
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
     </div>
   );
 }
