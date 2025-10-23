@@ -40,18 +40,11 @@ export function Landing() {
                   </Button>
                 </Link>
               ) : (
-                <>
-                  <Link to="/login" className="hidden sm:block">
-                    <Button variant="ghost" className="text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-teal-900">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link to="/signup">
-                    <Button variant="primary" size="sm" className="sm:text-base sm:px-4 sm:py-2">
-                      Get Started
-                    </Button>
-                  </Link>
-                </>
+                <Link to="/login">
+                  <Button variant="primary" size="sm" className="sm:text-base sm:px-4 sm:py-2">
+                    Get Started
+                  </Button>
+                </Link>
               )}
             </div>
           </div>
@@ -81,21 +74,14 @@ export function Landing() {
                 </Button>
               </Link>
             ) : (
-              <>
-                <Link to="/signup">
-                  <Button variant="primary" size="lg" className="shadow-xl">
-                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    Start Your Journey
-                  </Button>
-                </Link>
-                <Link to="/login">
-                  <Button variant="outline" size="lg">
-                    Sign In
-                  </Button>
-                </Link>
-              </>
+              <Link to="/login">
+                <Button variant="primary" size="lg" className="shadow-xl">
+                  <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Start Your Journey
+                </Button>
+              </Link>
             )}
           </div>
         </div>

@@ -251,65 +251,67 @@ export function JourneyDetail() {
 
                   return (
                     <div className="bg-gradient-to-br from-gold-50 to-teal-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 border-2 border-gold-200 dark:border-gold-700">
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-gold-600 to-gold-500 rounded-xl flex items-center justify-center shadow-lg">
-                          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                        {/* Date Info */}
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-gold-600 to-gold-500 rounded-xl flex items-center justify-center shadow-lg">
+                            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Target End Date</h4>
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">
+                              {targetDate.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                            {!isCompleted && (
+                              <p className={`text-sm font-medium mt-1 ${
+                                isOverdue
+                                  ? 'text-red-600 dark:text-red-400'
+                                  : daysRemaining <= 7
+                                  ? 'text-orange-600 dark:text-orange-400'
+                                  : 'text-teal-700 dark:text-teal-400'
+                              }`}>
+                                {isOverdue
+                                  ? `Overdue by ${Math.abs(daysRemaining)} ${Math.abs(daysRemaining) === 1 ? 'day' : 'days'}`
+                                  : `${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} remaining`
+                                }
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Target End Date</h4>
-                          <p className="text-2xl font-bold text-gold-700 dark:text-gold-400">
-                            {targetDate.toLocaleDateString('en-US', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </p>
-                        </div>
+
+                        {/* Metrics */}
+                        {!isCompleted && (
+                          <div className="grid grid-cols-2 gap-4 w-full md:w-auto md:flex">
+                            <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:min-w-[140px]">
+                              <p className="text-3xl font-bold text-gold-700 dark:text-gold-400 mb-1">
+                                {versesRemaining.toLocaleString()}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">Verses Remaining</p>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:min-w-[140px]">
+                              <p className={`text-3xl font-bold mb-1 ${
+                                isOverdue
+                                  ? 'text-red-600 dark:text-red-400'
+                                  : dailyVersesNeeded > 100
+                                  ? 'text-orange-600 dark:text-orange-400'
+                                  : 'text-green-600 dark:text-green-400'
+                              }`}>
+                                {isOverdue ? '—' : dailyVersesNeeded}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                {isOverdue ? 'Target Passed' : 'Verses/Day Needed'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-
-                      {!isCompleted && (
-                        <div className="grid sm:grid-cols-3 gap-4 mt-6">
-                          <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600">
-                            <p className={`text-3xl font-bold mb-1 ${
-                              isOverdue
-                                ? 'text-red-600 dark:text-red-400'
-                                : daysRemaining <= 7
-                                ? 'text-orange-600 dark:text-orange-400'
-                                : 'text-teal-700 dark:text-teal-400'
-                            }`}>
-                              {isOverdue ? 'Overdue' : daysRemaining}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {isOverdue ? `by ${Math.abs(daysRemaining)} days` : 'Days Remaining'}
-                            </p>
-                          </div>
-
-                          <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600">
-                            <p className="text-3xl font-bold text-gold-700 dark:text-gold-400 mb-1">
-                              {versesRemaining.toLocaleString()}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">Verses Remaining</p>
-                          </div>
-
-                          <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600">
-                            <p className={`text-3xl font-bold mb-1 ${
-                              isOverdue
-                                ? 'text-red-600 dark:text-red-400'
-                                : dailyVersesNeeded > 100
-                                ? 'text-orange-600 dark:text-orange-400'
-                                : 'text-green-600 dark:text-green-400'
-                            }`}>
-                              {isOverdue ? '—' : dailyVersesNeeded}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {isOverdue ? 'Target Passed' : 'Verses/Day Needed'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
 
                       {isCompleted && (
                         <div className="mt-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-4 text-center">

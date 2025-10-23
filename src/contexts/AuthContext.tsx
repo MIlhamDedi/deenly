@@ -1,13 +1,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
   User as FirebaseUser,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -17,8 +14,6 @@ interface AuthContextType {
   currentUser: FirebaseUser | null;
   userProfile: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -71,35 +66,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   /**
-   * Sign in with email and password
-   */
-  async function signIn(email: string, password: string) {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      await createUserProfile(result.user);
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to sign in');
-    }
-  }
-
-  /**
-   * Sign up with email and password
-   */
-  async function signUp(email: string, password: string, displayName: string) {
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Update display name
-      await updateProfile(result.user, { displayName });
-
-      // Create user profile in Firestore
-      await createUserProfile(result.user);
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to sign up');
-    }
-  }
-
-  /**
    * Sign in with Google
    */
   async function signInWithGoogle() {
@@ -146,8 +112,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     currentUser,
     userProfile,
     loading,
-    signIn,
-    signUp,
     signInWithGoogle,
     signOut,
   };
