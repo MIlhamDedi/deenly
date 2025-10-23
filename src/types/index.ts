@@ -47,6 +47,8 @@ export interface JourneyStats {
   versesCompleted: number;
   completionPercentage: number;
   lastActivityAt: Timestamp;
+  versesReadToday: number; // verses read today for this journey
+  todayDate?: Timestamp; // date for today's count (to reset daily)
 }
 
 export interface JourneySettings {

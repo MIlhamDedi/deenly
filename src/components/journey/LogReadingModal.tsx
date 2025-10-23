@@ -3,10 +3,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { VerseRangePicker } from './VerseRangePicker';
 import { useAuth } from '@/hooks/useAuth';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc, writeBatch } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { JourneyMember, ReadingLog } from '@/types';
-import { calculateVerseCount, expandVerseRange } from '@/lib/verseUtils';
+import { JourneyMember } from '@/types';
+import { logReading } from '@/services/journeyService';
 
 interface LogReadingModalProps {
   isOpen: boolean;
@@ -66,141 +64,17 @@ export function LogReadingModal({
     setLoading(true);
 
     try {
-      const verseCount = calculateVerseCount(startRef, endRef);
-      const readByNames = selectedUserIds.map((userId) => {
-        const member = members.find((m) => m.userId === userId);
-        return member?.displayName || 'Unknown';
-      });
-
-      const logData: Omit<ReadingLog, 'id'> = {
+      // Use the service to handle all the business logic
+      await logReading({
         journeyId,
-        loggedBy: currentUser.uid,
-        loggedByName: userProfile.displayName,
-        readBy: selectedUserIds,
-        readByNames,
+        currentUserId: currentUser.uid,
+        currentUserName: userProfile.displayName,
+        selectedUserIds,
+        members,
         startRef,
         endRef,
-        timestamp: serverTimestamp() as any,
-        verseCount,
-        ...(note.trim() && { note: note.trim() }), // Only include note if it has a value
-      };
-
-      await addDoc(collection(db, 'journeys', journeyId, 'readingLogs'), logData);
-
-      // Track unique verses and update journey stats
-      const allVerses = expandVerseRange(startRef, endRef);
-
-      // Check which verses are already completed
-      const newVerses: string[] = [];
-      for (const verseRef of allVerses) {
-        const verseDocRef = doc(db, 'journeys', journeyId, 'verseCompletions', verseRef);
-        const verseDoc = await getDoc(verseDocRef);
-
-        if (!verseDoc.exists()) {
-          newVerses.push(verseRef);
-        }
-      }
-
-      // Only proceed if there are new verses to track
-      if (newVerses.length > 0) {
-        const batch = writeBatch(db);
-
-        // Add verseCompletion documents for new verses
-        newVerses.forEach((verseRef) => {
-          const verseDocRef = doc(db, 'journeys', journeyId, 'verseCompletions', verseRef);
-          batch.set(verseDocRef, {
-            verseRef,
-            completedAt: serverTimestamp(),
-            completedBy: readByNames,
-          });
-        });
-
-        // Update journey stats with only new verse count
-        const journeyRef = doc(db, 'journeys', journeyId);
-        batch.update(journeyRef, {
-          'stats.versesCompleted': increment(newVerses.length),
-          'stats.completionPercentage': increment((newVerses.length / 6236) * 100),
-          'stats.lastActivityAt': serverTimestamp(),
-        });
-
-        await batch.commit();
-      } else {
-        // Still update lastActivityAt even if no new verses
-        const journeyRef = doc(db, 'journeys', journeyId);
-        await updateDoc(journeyRef, {
-          'stats.lastActivityAt': serverTimestamp(),
-        });
-      }
-
-      // Update personal stats for users who participated in this reading
-      for (const userId of selectedUserIds) {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          const currentStats = userData.stats || {
-            currentStreak: 0,
-            longestStreak: 0,
-            totalVersesRead: 0,
-            totalReadings: 0,
-          };
-
-          // Calculate streak
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          let newStreak = 1;
-          if (currentStats.lastReadDate) {
-            const lastRead = currentStats.lastReadDate.toDate();
-            lastRead.setHours(0, 0, 0, 0);
-
-            const diffTime = today.getTime() - lastRead.getTime();
-            const diffDays = diffTime / (1000 * 60 * 60 * 24);
-
-            if (diffDays === 0) {
-              // Same day - keep current streak
-              newStreak = currentStats.currentStreak;
-            } else if (diffDays === 1) {
-              // Yesterday - increment streak
-              newStreak = currentStats.currentStreak + 1;
-            }
-            // else: more than 1 day gap - streak resets to 1
-          }
-
-          const newLongestStreak = Math.max(newStreak, currentStats.longestStreak);
-
-          // Calculate today's verses
-          let todayVerses = verseCount;
-          if (currentStats.todayDate) {
-            const todayDate = currentStats.todayDate.toDate();
-            todayDate.setHours(0, 0, 0, 0);
-
-            const isSameDay = today.getTime() === todayDate.getTime();
-            if (isSameDay) {
-              // Same day - add to today's count
-              todayVerses = (currentStats.todayVersesRead || 0) + verseCount;
-            }
-            // else: different day - reset to current verse count
-          }
-
-          await updateDoc(userRef, {
-            'stats.currentStreak': newStreak,
-            'stats.longestStreak': newLongestStreak,
-            'stats.totalVersesRead': increment(verseCount),
-            'stats.totalReadings': increment(1),
-            'stats.lastReadDate': serverTimestamp(),
-            'stats.todayVersesRead': todayVerses,
-            'stats.todayDate': serverTimestamp(),
-          });
-        }
-      }
-
-      // Show feedback about duplicates
-      const duplicateCount = allVerses.length - newVerses.length;
-      if (duplicateCount > 0) {
-        console.log(`Note: ${duplicateCount} ${duplicateCount === 1 ? 'verse was' : 'verses were'} already completed and not counted again.`);
-      }
+        note,
+      });
 
       // Reset form
       setStartRef('1:1');
