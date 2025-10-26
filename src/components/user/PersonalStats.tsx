@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
+import { getStreakStatus } from '@/services/statsService';
 
 export function PersonalStats() {
   const { userProfile } = useAuth();
@@ -13,7 +14,14 @@ export function PersonalStats() {
     longestStreak: 0,
     totalVersesRead: 0,
     totalReadings: 0,
+    lastReadDate: null,
   };
+
+  // Calculate actual streak status
+  const { actualStreak, status: streakStatus } = getStreakStatus(
+    stats.currentStreak || 0,
+    stats.lastReadDate || null
+  );
 
   return (
     <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-700">
@@ -31,12 +39,27 @@ export function PersonalStats() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Current Streak */}
-        <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600">
-          <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
-            {stats.currentStreak}
-            <span className="text-base ml-1">🔥</span>
+        <div className={`bg-white dark:bg-gray-700 rounded-xl p-4 text-center border ${
+          streakStatus === 'at-risk'
+            ? 'border-orange-400 dark:border-orange-600 ring-2 ring-orange-200 dark:ring-orange-800'
+            : 'border-gray-200 dark:border-gray-600'
+        }`}>
+          <div className={`text-3xl font-bold mb-1 ${
+            streakStatus === 'at-risk'
+              ? 'text-orange-600 dark:text-orange-400'
+              : 'text-orange-600 dark:text-orange-400'
+          }`}>
+            {actualStreak}
+            <span className="text-base ml-1">
+              {streakStatus === 'at-risk' ? '⚠️' : '🔥'}
+            </span>
           </div>
-          <p className="text-xs text-gray-600 dark:text-gray-400">Current Streak</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            Current Streak
+            {streakStatus === 'at-risk' && (
+              <span className="block text-orange-600 dark:text-orange-400 font-semibold mt-1">At Risk!</span>
+            )}
+          </p>
         </div>
 
         {/* Longest Streak */}
@@ -66,15 +89,22 @@ export function PersonalStats() {
       </div>
 
       {/* Streak Motivation Message */}
-      {stats.currentStreak > 0 && (
+      {streakStatus === 'at-risk' && (
+        <div className="mt-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-2 border-orange-300 dark:border-orange-600 rounded-xl p-3">
+          <p className="text-sm text-center font-bold text-orange-700 dark:text-orange-300">
+            ⏰ Don't lose your {actualStreak}-day streak! Read today to keep it alive!
+          </p>
+        </div>
+      )}
+      {streakStatus === 'active' && actualStreak > 0 && (
         <div className="mt-4 bg-gradient-to-r from-orange-50 to-pink-50 dark:from-orange-900/20 dark:to-pink-900/20 border border-orange-200 dark:border-orange-700 rounded-xl p-3">
           <p className="text-sm text-center font-medium text-orange-700 dark:text-orange-400">
-            {stats.currentStreak === 1 && "Great start! Keep going tomorrow! 💪"}
-            {stats.currentStreak >= 2 && stats.currentStreak <= 6 && `${stats.currentStreak} days strong! Keep it up! 🌟`}
-            {stats.currentStreak === 7 && "One week streak! Masha Allah! 🎉"}
-            {stats.currentStreak > 7 && stats.currentStreak < 30 && `Amazing! ${stats.currentStreak} days in a row! 🚀`}
-            {stats.currentStreak === 30 && "30-day streak! Incredible dedication! 🌙"}
-            {stats.currentStreak > 30 && `Unstoppable! ${stats.currentStreak} days! Masha Allah! ✨`}
+            {actualStreak === 1 && "Great start! Keep going tomorrow! 💪"}
+            {actualStreak >= 2 && actualStreak <= 6 && `${actualStreak} days strong! Keep it up! 🌟`}
+            {actualStreak === 7 && "One week streak! Masha Allah! 🎉"}
+            {actualStreak > 7 && actualStreak < 30 && `Amazing! ${actualStreak} days in a row! 🚀`}
+            {actualStreak === 30 && "30-day streak! Incredible dedication! 🌙"}
+            {actualStreak > 30 && `Unstoppable! ${actualStreak} days! Masha Allah! ✨`}
           </p>
         </div>
       )}

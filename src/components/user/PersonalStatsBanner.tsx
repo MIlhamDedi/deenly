@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
+import { getStreakStatus } from '@/services/statsService';
 
 export function PersonalStatsBanner() {
   const { userProfile } = useAuth();
@@ -12,7 +13,14 @@ export function PersonalStatsBanner() {
     currentStreak: 0,
     todayVersesRead: 0,
     todayDate: undefined,
+    lastReadDate: null,
   };
+
+  // Calculate actual streak status
+  const { actualStreak, status: streakStatus } = getStreakStatus(
+    stats.currentStreak || 0,
+    stats.lastReadDate || null
+  );
 
   // Check if todayDate is actually today
   let displayTodayVerses = 0;
@@ -39,13 +47,26 @@ export function PersonalStatsBanner() {
         <div className="flex items-center gap-3 md:gap-6">
           {/* Current Streak */}
           <div className="flex items-center gap-2 md:gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <span className="text-xl md:text-2xl">🔥</span>
+            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${
+              streakStatus === 'at-risk'
+                ? 'bg-orange-500/30 animate-pulse'
+                : 'bg-white/20'
+            }`}>
+              <span className="text-xl md:text-2xl">
+                {streakStatus === 'at-risk' ? '⚠️' : '🔥'}
+              </span>
             </div>
             <div>
-              <p className="text-xs md:text-sm text-teal-100 dark:text-teal-200">Current Streak</p>
-              <p className="text-lg md:text-2xl font-bold text-white">
-                {stats.currentStreak} {stats.currentStreak === 1 ? 'day' : 'days'}
+              <p className="text-xs md:text-sm text-teal-100 dark:text-teal-200">
+                Current Streak
+                {streakStatus === 'at-risk' && (
+                  <span className="ml-1 text-orange-200 font-semibold">• At Risk!</span>
+                )}
+              </p>
+              <p className={`text-lg md:text-2xl font-bold ${
+                streakStatus === 'at-risk' ? 'text-orange-200' : 'text-white'
+              }`}>
+                {actualStreak} {actualStreak === 1 ? 'day' : 'days'}
               </p>
             </div>
           </div>
@@ -98,17 +119,22 @@ export function PersonalStatsBanner() {
         </div>
 
         {/* Motivational message */}
-        {stats.currentStreak === 0 && displayTodayVerses === 0 && (
+        {actualStreak === 0 && displayTodayVerses === 0 && (
           <div className="hidden lg:block text-white/90 text-sm">
             Start your reading journey today! 📖
           </div>
         )}
-        {stats.currentStreak > 0 && (
+        {streakStatus === 'at-risk' && (
+          <div className="hidden lg:block text-orange-200 text-sm font-semibold">
+            Read today to keep your {actualStreak}-day streak alive! ⏰
+          </div>
+        )}
+        {streakStatus === 'active' && actualStreak > 0 && (
           <div className="hidden lg:block text-white/90 text-sm">
-            {stats.currentStreak === 1 && "Keep going! 💪"}
-            {stats.currentStreak >= 2 && stats.currentStreak <= 6 && "You're on fire! 🌟"}
-            {stats.currentStreak >= 7 && stats.currentStreak < 30 && "Amazing streak! 🚀"}
-            {stats.currentStreak >= 30 && "Masha Allah! 🌙"}
+            {actualStreak === 1 && "Keep going! 💪"}
+            {actualStreak >= 2 && actualStreak <= 6 && "You're on fire! 🌟"}
+            {actualStreak >= 7 && actualStreak < 30 && "Amazing streak! 🚀"}
+            {actualStreak >= 30 && "Masha Allah! 🌙"}
           </div>
         )}
       </div>

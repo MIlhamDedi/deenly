@@ -101,3 +101,39 @@ export function isToday(date: Date | Timestamp): boolean {
 
   return checkDate.getTime() === today.getTime();
 }
+
+/**
+ * Get the actual current streak status based on lastReadDate
+ * Returns the streak value and its status
+ */
+export function getStreakStatus(
+  currentStreak: number,
+  lastReadDate: Timestamp | null
+): {
+  actualStreak: number;
+  status: 'active' | 'at-risk' | 'broken';
+} {
+  if (!lastReadDate || currentStreak === 0) {
+    return { actualStreak: 0, status: 'broken' };
+  }
+
+  const lastRead = lastReadDate.toDate();
+  lastRead.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffTime = today.getTime() - lastRead.getTime();
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+  if (diffDays === 0) {
+    // Read today - streak is active and safe
+    return { actualStreak: currentStreak, status: 'active' };
+  } else if (diffDays === 1) {
+    // Read yesterday - streak is still valid but at risk (need to read today)
+    return { actualStreak: currentStreak, status: 'at-risk' };
+  } else {
+    // More than 1 day - streak is broken
+    return { actualStreak: 0, status: 'broken' };
+  }
+}

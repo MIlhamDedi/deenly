@@ -6,7 +6,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User } from '@/types';
 
@@ -94,13 +94,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let unsubscribeProfile: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
 
+      // Clean up previous profile listener if exists
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+        unsubscribeProfile = null;
+      }
+
       if (user) {
-        // Fetch user profile from Firestore
-        const profile = await createUserProfile(user);
-        setUserProfile(profile as User);
+        // Ensure user profile exists
+        await createUserProfile(user);
+
+        // Set up real-time listener for user profile
+        const userRef = doc(db, 'users', user.uid);
+        unsubscribeProfile = onSnapshot(userRef, (doc) => {
+          if (doc.exists()) {
+            setUserProfile(doc.data() as User);
+          }
+        });
       } else {
         setUserProfile(null);
       }
@@ -108,7 +123,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+      }
+    };
   }, []);
 
   const value: AuthContextType = {
