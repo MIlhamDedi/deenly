@@ -25,6 +25,12 @@ service cloud.firestore {
 
       // No one can delete user profiles
       allow delete: if false;
+
+      // FCM Tokens subcollection
+      match /fcmTokens/{tokenId} {
+        // Users can read, write, and delete their own FCM tokens
+        allow read, write, delete: if isOwner(userId);
+      }
     }
 
     // Journeys collection

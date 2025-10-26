@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getMessaging, isSupported } from 'firebase/messaging';
 
 // Firebase configuration
 // Replace these with your actual Firebase project credentials
@@ -19,5 +20,20 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Initialize Firebase Messaging (conditionally, as it's not supported in all browsers)
+let messagingInstance: ReturnType<typeof getMessaging> | null = null;
+
+export const getMessagingInstance = async () => {
+  if (messagingInstance) return messagingInstance;
+
+  const supported = await isSupported();
+  if (supported) {
+    messagingInstance = getMessaging(app);
+    return messagingInstance;
+  }
+
+  return null;
+};
 
 export default app;

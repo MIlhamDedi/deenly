@@ -8,6 +8,7 @@ import {
   isNotificationSupported,
   getNotificationPermission,
   requestNotificationPermission,
+  getAndStoreFCMToken,
 } from '@/lib/notifications';
 
 interface SettingsModalProps {
@@ -57,6 +58,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           setDailyReminder(false);
           setLoading(false);
           return;
+        }
+      }
+
+      // If daily reminders are enabled, get and store FCM token
+      if (dailyReminder) {
+        try {
+          await getAndStoreFCMToken(currentUser.uid);
+        } catch (tokenError) {
+          console.error('Failed to get FCM token:', tokenError);
+          // Don't fail the whole operation if FCM token fails
         }
       }
 

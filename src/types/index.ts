@@ -147,6 +147,14 @@ export interface InviteMemberInput {
   message?: string;
 }
 
+// FCM Token types (for push notifications)
+export interface FCMToken {
+  token: string; // The actual FCM token
+  createdAt: Timestamp;
+  lastUsed?: Timestamp;
+  deviceInfo?: string; // Optional info about the device (browser, OS, etc.)
+}
+
 // Utility types
 export type MemberRole = 'owner' | 'admin' | 'member';
 export type InvitationStatus = 'pending' | 'accepted' | 'rejected';

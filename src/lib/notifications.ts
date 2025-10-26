@@ -187,3 +187,130 @@ export function scheduleDailyNotification(
     }
   };
 }
+
+/**
+ * Get FCM token for the current device
+ * Requires Firebase Messaging to be initialized and notification permission granted
+ */
+export async function getFCMToken(): Promise<string | null> {
+  try {
+    const { getMessagingInstance } = await import('@/lib/firebase');
+    const messaging = await getMessagingInstance();
+
+    if (!messaging) {
+      console.log('Firebase Messaging not supported');
+      return null;
+    }
+
+    const { getToken } = await import('firebase/messaging');
+    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+
+    if (!vapidKey) {
+      console.warn('VAPID key not configured. FCM tokens cannot be generated.');
+      return null;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const token = await getToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration: registration,
+    });
+
+    return token || null;
+  } catch (error) {
+    console.error('Error getting FCM token:', error);
+    return null;
+  }
+}
+
+/**
+ * Store FCM token in Firestore for a user
+ * Stores in users/{userId}/fcmTokens/{tokenHash} subcollection
+ */
+export async function storeFCMToken(userId: string, token: string): Promise<boolean> {
+  try {
+    const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+    const { db } = await import('@/lib/firebase');
+
+    // Use a hash of the token as the document ID to avoid duplicates
+    const tokenHash = await hashString(token);
+
+    const tokenRef = doc(db, 'users', userId, 'fcmTokens', tokenHash);
+
+    await setDoc(tokenRef, {
+      token,
+      createdAt: serverTimestamp(),
+      lastUsed: serverTimestamp(),
+      deviceInfo: getDeviceInfo(),
+    });
+
+    console.log('FCM token stored successfully');
+    return true;
+  } catch (error) {
+    console.error('Error storing FCM token:', error);
+    return false;
+  }
+}
+
+/**
+ * Get and store FCM token for the current user
+ * This should be called after notification permission is granted
+ */
+export async function getAndStoreFCMToken(userId: string): Promise<string | null> {
+  try {
+    const token = await getFCMToken();
+
+    if (!token) {
+      console.log('No FCM token obtained');
+      return null;
+    }
+
+    const stored = await storeFCMToken(userId, token);
+
+    if (stored) {
+      console.log('FCM token obtained and stored');
+      return token;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting and storing FCM token:', error);
+    return null;
+  }
+}
+
+/**
+ * Simple hash function for creating consistent token IDs
+ */
+async function hashString(str: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.substring(0, 20); // Use first 20 chars for document ID
+}
+
+/**
+ * Get basic device info for tracking which device has which token
+ */
+function getDeviceInfo(): string {
+  const ua = navigator.userAgent;
+  let browser = 'Unknown';
+  let os = 'Unknown';
+
+  // Detect browser
+  if (ua.includes('Chrome')) browser = 'Chrome';
+  else if (ua.includes('Safari')) browser = 'Safari';
+  else if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Edge')) browser = 'Edge';
+
+  // Detect OS
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Mac')) os = 'macOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iOS')) os = 'iOS';
+
+  return `${browser} on ${os}`;
+}
