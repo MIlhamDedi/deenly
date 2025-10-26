@@ -263,7 +263,14 @@ export async function getFCMToken(): Promise<string | null> {
       return null;
     }
 
-    const registration = await navigator.serviceWorker.ready;
+    // Wait for service worker with timeout
+    const registration = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<ServiceWorkerRegistration>((_, reject) =>
+        setTimeout(() => reject(new Error('Service worker timeout')), 5000)
+      ),
+    ]);
+
     const token = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration: registration,

@@ -87,15 +87,18 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     const { title, body, tag } = event.data;
 
-    self.registration.showNotification(title, {
-      body: body,
-      icon: '/logo.png',
-      badge: '/logo.png',
-      tag: tag || 'daily-reminder',
-      requireInteraction: false,
-      data: {
-        url: '/app',
-      },
-    });
+    // Use waitUntil to keep the service worker alive while showing notification
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body: body,
+        icon: '/logo.png',
+        badge: '/logo.png',
+        tag: tag || 'daily-reminder',
+        requireInteraction: false,
+        data: {
+          url: '/app',
+        },
+      })
+    );
   }
 });

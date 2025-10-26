@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { CreateJourneyModal } from '@/components/journey/CreateJourneyModal';
 import { JourneyCard } from '@/components/journey/JourneyCard';
 import { PersonalStatsBanner } from '@/components/user/PersonalStatsBanner';
+import { NotificationBanner } from '@/components/notifications/NotificationBanner';
 import { SettingsModal } from '@/components/settings/SettingsModal';
 import { AppNavbar } from '@/components/navigation/AppNavbar';
 
@@ -23,6 +24,9 @@ export function AppPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Notification Prompt Banner */}
+        <NotificationBanner />
+
         {/* Personal Stats Banner */}
         <div className="mb-8">
           <PersonalStatsBanner />

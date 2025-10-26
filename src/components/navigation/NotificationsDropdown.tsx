@@ -118,7 +118,7 @@ export function NotificationsDropdown() {
                       Enable Daily Reminders
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Get a gentle reminder at 7pm each day to continue your Quran reading journey
+                      Get a gentle reminder at customisable time each day to continue your Quran reading journey
                     </p>
                   </div>
                 </div>
