@@ -118,7 +118,7 @@ export function PersonalStatsBanner() {
           </div>
         </div>
 
-        {/* Motivational message */}
+        {/* Motivational message - Desktop */}
         {actualStreak === 0 && displayTodayVerses === 0 && (
           <div className="hidden lg:block text-white/90 text-sm">
             Start your reading journey today! 📖
@@ -135,6 +135,34 @@ export function PersonalStatsBanner() {
             {actualStreak >= 2 && actualStreak <= 6 && "You're on fire! 🌟"}
             {actualStreak >= 7 && actualStreak < 30 && "Amazing streak! 🚀"}
             {actualStreak >= 30 && "Masha Allah! 🌙"}
+          </div>
+        )}
+      </div>
+
+      {/* Motivational message - Mobile (full width row) */}
+      <div className="lg:hidden mt-3">
+        {actualStreak === 0 && displayTodayVerses === 0 && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
+            <p className="text-center text-white font-medium text-sm">
+              Start your reading journey today! 📖
+            </p>
+          </div>
+        )}
+        {streakStatus === 'at-risk' && (
+          <div className="bg-orange-500/30 backdrop-blur-sm rounded-lg px-3 py-2.5 border border-orange-400/50 animate-pulse">
+            <p className="text-center text-white font-bold text-sm">
+              ⏰ Read today to keep your {actualStreak}-day streak alive!
+            </p>
+          </div>
+        )}
+        {streakStatus === 'active' && actualStreak > 0 && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
+            <p className="text-center text-white font-semibold text-sm">
+              {actualStreak === 1 && "Keep going! 💪"}
+              {actualStreak >= 2 && actualStreak <= 6 && "You're on fire! 🌟"}
+              {actualStreak >= 7 && actualStreak < 30 && "Amazing streak! 🚀"}
+              {actualStreak >= 30 && "Masha Allah! 🌙"}
+            </p>
           </div>
         )}
       </div>
