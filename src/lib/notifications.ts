@@ -6,6 +6,35 @@ export interface NotificationPermissionStatus {
   prompt: boolean;
 }
 
+export interface SystemReminder {
+  time: string; // "HH:MM" format
+  title: string;
+  body: string;
+  tag: string;
+  requiresNotRead?: boolean; // Only show if user hasn't read today
+}
+
+/**
+ * System-configured reminders (always active if notifications are enabled)
+ * These are in addition to user-configured reminders
+ */
+export const SYSTEM_REMINDERS: SystemReminder[] = [
+  {
+    time: '04:00',
+    title: 'Good Morning! ☀️',
+    body: 'Start your day with the Quran. A few verses can set a blessed tone for the day ahead.',
+    tag: 'morning-reminder',
+    requiresNotRead: true,
+  },
+  {
+    time: '21:00',
+    title: 'Evening Reminder 🌙',
+    body: 'Great job today! Read a few verses before sleep to end your day with peace.',
+    tag: 'evening-reminder',
+    requiresNotRead: true,
+  },
+];
+
 /**
  * Check if notifications are supported in this browser
  */
@@ -185,6 +214,30 @@ export function scheduleDailyNotification(
       clearTimeout(timeoutId);
       timeoutId = null;
     }
+  };
+}
+
+/**
+ * Schedule multiple daily notifications
+ * Returns a cleanup function that cancels all scheduled notifications
+ */
+export function scheduleMultipleNotifications(
+  reminders: Array<{
+    time: string;
+    onTrigger: () => void;
+  }>
+): () => void {
+  const cleanupFunctions: Array<() => void> = [];
+
+  // Schedule each reminder
+  reminders.forEach(({ time, onTrigger }) => {
+    const cleanup = scheduleDailyNotification(time, onTrigger);
+    cleanupFunctions.push(cleanup);
+  });
+
+  // Return a function that cleans up all schedules
+  return () => {
+    cleanupFunctions.forEach((cleanup) => cleanup());
   };
 }
 
