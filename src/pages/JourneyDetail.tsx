@@ -211,13 +211,6 @@ export function JourneyDetail() {
           <div className="p-6 sm:p-8">
             {activeTab === 'overview' && (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Journey Overview</h3>
-                  {journey.description && (
-                    <p className="text-gray-600 dark:text-gray-400">{journey.description}</p>
-                  )}
-                </div>
-
                 {/* Target Date Section */}
                 {journey.targetEndDate && (() => {
                   const targetDate = journey.targetEndDate.toDate();
@@ -319,36 +312,29 @@ export function JourneyDetail() {
                   );
                 })()}
 
-                {/* Journey Stats */}
-                <div className="bg-gradient-to-br from-teal-50 to-gray-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 border border-teal-100 dark:border-gray-700">
-                  <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-4">Journey Statistics</h4>
-                  <div className="grid grid-cols-2 md:flex md:flex-row gap-4">
-                    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:flex-1">
-                      <p className="text-3xl font-bold text-teal-700 dark:text-teal-400 mb-1">
-                        {journey.stats.versesCompleted.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Verses Completed</p>
+                {/* Quick Actions / Info */}
+                {!journey.targetEndDate && (
+                  <div className="bg-gradient-to-br from-gray-50 to-teal-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-100 dark:bg-teal-900 rounded-full mb-4">
+                      <svg className="w-8 h-8 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
                     </div>
-                    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:flex-1">
-                      <p className="text-3xl font-bold text-gold-700 dark:text-gold-400 mb-1">
-                        {((journey.stats.versesCompleted / 6236) * 100).toFixed(1)}%
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Progress</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:flex-1">
-                      <p className="text-3xl font-bold text-purple-700 dark:text-purple-400 mb-1">
-                        {journey.memberIds.length}
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Members</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-600 md:flex-1">
-                      <p className="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-1">
-                        {readingLogs.length}
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Readings</p>
-                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      No Target Date Set
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      Set a target completion date to track your progress and get daily verse recommendations
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowEditModal(true)}
+                    >
+                      Set Target Date
+                    </Button>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
