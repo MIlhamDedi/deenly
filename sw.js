@@ -34,9 +34,27 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests and chrome-extension requests
+  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension://')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
-      .then((response) => response || fetch(event.request))
+      .then((response) => {
+        if (response) {
+          return response;
+        }
+
+        // Clone the request because it can only be used once
+        return fetch(event.request.clone())
+          .catch((error) => {
+            // Silently fail for failed fetches (offline, 404s, etc.)
+            console.log('Fetch failed for:', event.request.url, error);
+            // Return a basic response or undefined to prevent uncaught errors
+            return new Response('', { status: 408, statusText: 'Request Timeout' });
+          });
+      })
   );
 });
 
