@@ -77,6 +77,7 @@ export interface MemberStats {
 export interface ReadingLog {
   id: string;
   journeyId: string;
+  readingSessionId: string; // Links readings across multiple journeys (for deduplication)
   loggedBy: string; // user who created the log
   loggedByName: string; // denormalized for display
   readBy: string[]; // array of user IDs who actually read it (can be multiple)

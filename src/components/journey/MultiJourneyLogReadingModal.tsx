@@ -1,46 +1,33 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useMemo } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { VerseRangePicker } from './VerseRangePicker';
 import { useAuth } from '@/hooks/useAuth';
-import { JourneyMember } from '@/types';
-import { logReading } from '@/services/journeyService';
-import { getNextVerse } from '@/lib/verseUtils';
+import { Journey, JourneyMember } from '@/types';
+import { logReadingToMultipleJourneys } from '@/services/journeyService';
 
-interface LogReadingModalProps {
+interface MultiJourneyLogReadingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  journeyId: string;
-  members: JourneyMember[];
+  journeys: Journey[];
+  journeyMembers: Map<string, JourneyMember[]>; // journeyId -> members
   onSuccess?: () => void;
-  lastReadingEndRef?: string;
 }
 
-export function LogReadingModal({
+export function MultiJourneyLogReadingModal({
   isOpen,
   onClose,
-  journeyId,
-  members,
+  journeys,
+  journeyMembers,
   onSuccess,
-  lastReadingEndRef,
-}: LogReadingModalProps) {
+}: MultiJourneyLogReadingModalProps) {
   const { currentUser, userProfile } = useAuth();
-
-  // Calculate initial verse references based on last reading
-  const getInitialRefs = () => {
-    if (lastReadingEndRef) {
-      const nextVerse = getNextVerse(lastReadingEndRef);
-      if (nextVerse) {
-        return { start: nextVerse, end: nextVerse };
-      }
-    }
-    return { start: '1:1', end: '1:1' };
-  };
-
-  const initialRefs = getInitialRefs();
-  const [startRef, setStartRef] = useState(initialRefs.start);
-  const [endRef, setEndRef] = useState(initialRefs.end);
+  const [startRef, setStartRef] = useState('1:1');
+  const [endRef, setEndRef] = useState('1:1');
   const [isValidRange, setIsValidRange] = useState(true);
+  const [selectedJourneyIds, setSelectedJourneyIds] = useState<string[]>(
+    journeys.length > 0 ? [journeys[0].id] : []
+  );
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
     currentUser ? [currentUser.uid] : []
   );
@@ -48,19 +35,43 @@ export function LogReadingModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Update initial refs when lastReadingEndRef changes or modal opens
-  useEffect(() => {
-    if (isOpen) {
-      const refs = getInitialRefs();
-      setStartRef(refs.start);
-      setEndRef(refs.end);
-    }
-  }, [isOpen, lastReadingEndRef]);
+  // Compute union of all members from selected journeys
+  const availableMembers = useMemo(() => {
+    const memberMap = new Map<string, JourneyMember>();
+
+    selectedJourneyIds.forEach((journeyId) => {
+      const members = journeyMembers.get(journeyId) || [];
+      members.forEach((member) => {
+        if (!memberMap.has(member.userId)) {
+          memberMap.set(member.userId, member);
+        }
+      });
+    });
+
+    return Array.from(memberMap.values()).sort((a, b) =>
+      a.displayName.localeCompare(b.displayName)
+    );
+  }, [selectedJourneyIds, journeyMembers]);
 
   function handleRangeChange(start: string, end: string, valid: boolean) {
     setStartRef(start);
     setEndRef(end);
     setIsValidRange(valid);
+  }
+
+  function toggleJourney(journeyId: string) {
+    setSelectedJourneyIds((prev) => {
+      const newSelection = prev.includes(journeyId)
+        ? prev.filter((id) => id !== journeyId)
+        : [...prev, journeyId];
+
+      // If no journeys selected, clear user selection
+      if (newSelection.length === 0) {
+        setSelectedUserIds([]);
+      }
+
+      return newSelection;
+    });
   }
 
   function toggleUser(userId: string) {
@@ -80,6 +91,11 @@ export function LogReadingModal({
       return;
     }
 
+    if (selectedJourneyIds.length === 0) {
+      setError('Please select at least one journey');
+      return;
+    }
+
     if (selectedUserIds.length === 0) {
       setError('Please select at least one person who read');
       return;
@@ -89,22 +105,27 @@ export function LogReadingModal({
     setLoading(true);
 
     try {
-      // Use the service to handle all the business logic
-      await logReading({
-        journeyId,
+      // Get members for each selected journey
+      const journeyMembersMap = new Map<string, JourneyMember[]>();
+      selectedJourneyIds.forEach((journeyId) => {
+        journeyMembersMap.set(journeyId, journeyMembers.get(journeyId) || []);
+      });
+
+      await logReadingToMultipleJourneys({
+        journeyIds: selectedJourneyIds,
         currentUserId: currentUser.uid,
         currentUserName: userProfile.displayName,
         selectedUserIds,
-        members,
+        journeyMembersMap,
         startRef,
         endRef,
         note,
       });
 
-      // Reset form to initial values based on last reading
-      const refs = getInitialRefs();
-      setStartRef(refs.start);
-      setEndRef(refs.end);
+      // Reset form
+      setStartRef('1:1');
+      setEndRef('1:1');
+      setSelectedJourneyIds(journeys.length > 0 ? [journeys[0].id] : []);
       setSelectedUserIds(currentUser ? [currentUser.uid] : []);
       setNote('');
       onClose();
@@ -122,9 +143,9 @@ export function LogReadingModal({
 
   function handleClose() {
     if (!loading) {
-      const refs = getInitialRefs();
-      setStartRef(refs.start);
-      setEndRef(refs.end);
+      setStartRef('1:1');
+      setEndRef('1:1');
+      setSelectedJourneyIds(journeys.length > 0 ? [journeys[0].id] : []);
       setSelectedUserIds(currentUser ? [currentUser.uid] : []);
       setNote('');
       setError('');
@@ -136,7 +157,7 @@ export function LogReadingModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Log Reading"
+      title="Log Reading to Journeys"
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -151,9 +172,47 @@ export function LogReadingModal({
           <VerseRangePicker
             onRangeChange={handleRangeChange}
             disabled={loading}
-            initialStartRef={startRef}
-            initialEndRef={endRef}
           />
+        </div>
+
+        {/* Journey Selection */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Select journeys to log to
+          </label>
+          <div className="space-y-2 max-h-48 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            {journeys.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                No journeys available
+              </p>
+            ) : (
+              journeys.map((journey) => (
+                <label
+                  key={journey.id}
+                  className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedJourneyIds.includes(journey.id)}
+                    onChange={() => toggleJourney(journey.id)}
+                    disabled={loading}
+                    className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 focus:ring-2 disabled:cursor-not-allowed"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {journey.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {journey.stats.completionPercentage.toFixed(1)}% complete
+                    </p>
+                  </div>
+                </label>
+              ))
+            )}
+          </div>
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            Select one or more journeys to track this reading
+          </p>
         </div>
 
         {/* Who Read */}
@@ -162,12 +221,14 @@ export function LogReadingModal({
             Who read these verses?
           </label>
           <div className="space-y-2 max-h-48 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            {members.length === 0 ? (
+            {availableMembers.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                No members available
+                {selectedJourneyIds.length === 0
+                  ? 'Please select at least one journey first'
+                  : 'No members available'}
               </p>
             ) : (
-              members.map((member) => (
+              availableMembers.map((member) => (
                 <label
                   key={member.userId}
                   className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors"
@@ -223,11 +284,11 @@ export function LogReadingModal({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div className="text-sm text-teal-800 dark:text-teal-200">
-              <p className="font-semibold mb-1">What happens after logging?</p>
+              <p className="font-semibold mb-1">Multi-journey logging</p>
               <ul className="list-disc list-inside space-y-1">
-                <li>Journey progress will be updated automatically</li>
-                <li>All members can see this activity in the feed</li>
-                <li>Individual member stats will be updated</li>
+                <li>Your personal stats will count these verses only once</li>
+                <li>Each selected journey will be updated separately</li>
+                <li>All members from selected journeys can see this activity</li>
               </ul>
             </div>
           </div>
@@ -248,7 +309,7 @@ export function LogReadingModal({
             type="submit"
             variant="primary"
             isLoading={loading}
-            disabled={!isValidRange || selectedUserIds.length === 0}
+            disabled={!isValidRange || selectedJourneyIds.length === 0 || selectedUserIds.length === 0}
             className="flex-1"
           >
             Log Reading

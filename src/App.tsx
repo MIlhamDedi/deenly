@@ -7,14 +7,21 @@ import { SignUp } from '@/pages/SignUp';
 import { AppPage } from '@/pages/App';
 import { JourneyDetail } from '@/pages/JourneyDetail';
 import { JoinJourney } from '@/pages/JoinJourney';
+import { useNotifications } from '@/hooks/useNotifications';
 
 function App() {
+  function NotificationsManager() {
+    useNotifications();
+    return null;
+  }
+
   return (
     <Router
       basename={import.meta.env.BASE_URL}
       future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
     >
       <AuthProvider>
+        <NotificationsManager />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Landing />} />

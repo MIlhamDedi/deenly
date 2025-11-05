@@ -1,18 +1,48 @@
 import { useState, useEffect } from 'react';
 import { QURAN_SURAHS } from '@/lib/quranData';
-import { validateVerseRange, calculateVerseCount, formatVerseRange } from '@/lib/verseUtils';
+import { validateVerseRange, calculateVerseCount, formatVerseRange, parseVerseRef } from '@/lib/verseUtils';
 
 interface VerseRangePickerProps {
   onRangeChange: (startRef: string, endRef: string, isValid: boolean) => void;
   disabled?: boolean;
+  initialStartRef?: string;
+  initialEndRef?: string;
 }
 
-export function VerseRangePicker({ onRangeChange, disabled = false }: VerseRangePickerProps) {
-  const [startSurah, setStartSurah] = useState<number>(1);
-  const [startVerse, setStartVerse] = useState<number>(1);
-  const [endSurah, setEndSurah] = useState<number>(1);
-  const [endVerse, setEndVerse] = useState<number>(1);
+export function VerseRangePicker({
+  onRangeChange,
+  disabled = false,
+  initialStartRef,
+  initialEndRef
+}: VerseRangePickerProps) {
+  // Parse initial values if provided
+  const getInitialValues = () => {
+    const startParsed = initialStartRef ? parseVerseRef(initialStartRef) : null;
+    const endParsed = initialEndRef ? parseVerseRef(initialEndRef) : null;
+
+    return {
+      startSurah: startParsed?.surah || 1,
+      startVerse: startParsed?.verse || 1,
+      endSurah: endParsed?.surah || 1,
+      endVerse: endParsed?.verse || 1,
+    };
+  };
+
+  const initial = getInitialValues();
+  const [startSurah, setStartSurah] = useState<number>(initial.startSurah);
+  const [startVerse, setStartVerse] = useState<number>(initial.startVerse);
+  const [endSurah, setEndSurah] = useState<number>(initial.endSurah);
+  const [endVerse, setEndVerse] = useState<number>(initial.endVerse);
   const [error, setError] = useState<string | null>(null);
+
+  // Update state when initial values change
+  useEffect(() => {
+    const newInitial = getInitialValues();
+    setStartSurah(newInitial.startSurah);
+    setStartVerse(newInitial.startVerse);
+    setEndSurah(newInitial.endSurah);
+    setEndVerse(newInitial.endVerse);
+  }, [initialStartRef, initialEndRef]);
 
   // Get verse count for selected surahs
   const startSurahData = QURAN_SURAHS.find((s) => s.number === startSurah);

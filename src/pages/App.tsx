@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useJourneys } from '@/hooks/useJourneys';
-import { useNotifications } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/Button';
 import { CreateJourneyModal } from '@/components/journey/CreateJourneyModal';
 import { JourneyCard } from '@/components/journey/JourneyCard';
@@ -8,14 +7,42 @@ import { PersonalStatsBanner } from '@/components/user/PersonalStatsBanner';
 import { NotificationBanner } from '@/components/notifications/NotificationBanner';
 import { SettingsModal } from '@/components/settings/SettingsModal';
 import { AppNavbar } from '@/components/navigation/AppNavbar';
+import { MultiJourneyLogReadingModal } from '@/components/journey/MultiJourneyLogReadingModal';
+import { JourneyMember } from '@/types';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export function AppPage() {
   const { journeys, loading } = useJourneys();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showMultiLogModal, setShowMultiLogModal] = useState(false);
+  const [journeyMembers, setJourneyMembers] = useState<Map<string, JourneyMember[]>>(new Map());
+  const [membersLoading, setMembersLoading] = useState(false);
 
-  // Set up notification scheduling
-  useNotifications();
+  // Notification scheduling is initialized globally in App root
+
+  async function openMultiJourneyLog() {
+    // Preload members for all journeys before opening modal
+    setMembersLoading(true);
+    try {
+      const membersMap = new Map<string, JourneyMember[]>();
+      await Promise.all(
+        journeys.map(async (j) => {
+          const snap = await getDocs(collection(db, 'journeys', j.id, 'members'));
+          const members = snap.docs.map((d) => d.data() as JourneyMember);
+          membersMap.set(j.id, members);
+        })
+      );
+      setJourneyMembers(membersMap);
+    } catch (e) {
+      console.error('Failed loading journey members:', e);
+      setJourneyMembers(new Map());
+    } finally {
+      setMembersLoading(false);
+      setShowMultiLogModal(true);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-gold-50/30 to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-teal-950">
@@ -32,6 +59,23 @@ export function AppPage() {
           <PersonalStatsBanner />
         </div>
 
+        {/* Action Button */}
+        <div className="mb-6">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={openMultiJourneyLog}
+            isLoading={membersLoading}
+            disabled={journeys.length === 0}
+            className="w-full sm:w-auto shadow-lg"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Log Reading
+          </Button>
+        </div>
+
         {/* Journeys Section Header */}
         <div className="mb-6">
           <div className="flex justify-between items-center gap-3">
@@ -45,18 +89,20 @@ export function AppPage() {
                   : `Managing ${journeys.length} ${journeys.length === 1 ? 'journey' : 'journeys'}`}
               </p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => setShowCreateModal(true)}
-              size="sm"
-              className="shadow-lg whitespace-nowrap"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="hidden sm:inline">New Journey</span>
-              <span className="sm:hidden">New</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateModal(true)}
+                size="sm"
+                className="shadow-lg whitespace-nowrap"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="hidden sm:inline">New Journey</span>
+                <span className="sm:hidden">New</span>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -109,6 +155,14 @@ export function AppPage() {
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
+      />
+
+      {/* Multi-journey Log Reading Modal */}
+      <MultiJourneyLogReadingModal
+        isOpen={showMultiLogModal}
+        onClose={() => setShowMultiLogModal(false)}
+        journeys={journeys}
+        journeyMembers={journeyMembers}
       />
     </div>
   );

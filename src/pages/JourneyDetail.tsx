@@ -23,6 +23,9 @@ export function JourneyDetail() {
 
   const { journey, members, readingLogs, loading, error } = useJourneyDetail(id || '');
 
+  // Get the last reading's endRef to use as the starting point for new readings
+  const lastReadingEndRef = readingLogs.length > 0 ? readingLogs[0].endRef : undefined;
+
   async function handleShareInvite() {
     const inviteUrl = `${window.location.origin}${import.meta.env.BASE_URL}join?journey=${id}`;
 
@@ -494,6 +497,7 @@ export function JourneyDetail() {
         onClose={() => setShowLogModal(false)}
         journeyId={id!}
         members={members}
+        lastReadingEndRef={lastReadingEndRef}
       />
 
       {/* Edit Journey Modal */}

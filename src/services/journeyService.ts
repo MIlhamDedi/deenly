@@ -27,6 +27,68 @@ export interface LogReadingInput {
   note?: string;
 }
 
+export interface LogReadingMultipleInput {
+  journeyIds: string[];
+  currentUserId: string;
+  currentUserName: string;
+  selectedUserIds: string[];
+  journeyMembersMap: Map<string, JourneyMember[]>;
+  startRef: string;
+  endRef: string;
+  note?: string;
+}
+
+/**
+ * Create a default personal journey for a user
+ * Called automatically when user logs reading for the first time with no journeys
+ */
+export async function createDefaultJourney(
+  userId: string,
+  displayName: string
+): Promise<string> {
+  const journeysRef = collection(db, 'journeys');
+
+  const newJourney = {
+    name: `${displayName}'s Personal Reading`,
+    description: 'My personal Quran reading journey',
+    createdBy: userId,
+    createdAt: serverTimestamp(),
+    memberIds: [userId],
+    stats: {
+      versesCompleted: 0,
+      completionPercentage: 0,
+      versesReadToday: 0,
+      lastActivityAt: serverTimestamp(),
+    },
+    targetEndDate: null,
+  };
+
+  const journeyDoc = await addDoc(journeysRef, newJourney);
+
+  // Add creator as owner member
+  const memberRef = doc(db, `journeys/${journeyDoc.id}/members`, userId);
+  await updateDoc(doc(db, 'journeys', journeyDoc.id), {});
+
+  // Create member document
+  const batch = writeBatch(db);
+  batch.set(memberRef, {
+    userId,
+    displayName,
+    email: '', // Will be filled later if needed
+    role: 'owner',
+    joinedAt: serverTimestamp(),
+    stats: {
+      versesRead: 0,
+      lastReadAt: null,
+      totalReadings: 0,
+    },
+  });
+
+  await batch.commit();
+
+  return journeyDoc.id;
+}
+
 /**
  * Log a reading for a journey and update all related stats
  */
@@ -42,18 +104,67 @@ export async function logReading(input: LogReadingInput): Promise<void> {
     note,
   } = input;
 
+  const readingSessionId = `session_${Date.now()}_${Math.random()
+    .toString(36)
+    .substr(2, 9)}`;
+
+  await logReadingForJourney({
+    journeyId,
+    readingSessionId,
+    currentUserId,
+    currentUserName,
+    selectedUserIds,
+    members,
+    startRef,
+    endRef,
+    note,
+    updatePersonal: true,
+  });
+}
+
+// Internal: create the log and update journey stats. Optionally update personal stats.
+async function logReadingForJourney(params: {
+  journeyId: string;
+  readingSessionId: string;
+  currentUserId: string;
+  currentUserName: string;
+  selectedUserIds: string[];
+  members: JourneyMember[];
+  startRef: string;
+  endRef: string;
+  note?: string;
+  updatePersonal: boolean;
+}): Promise<void> {
+  const {
+    journeyId,
+    readingSessionId,
+    currentUserId,
+    currentUserName,
+    selectedUserIds,
+    members,
+    startRef,
+    endRef,
+    note,
+    updatePersonal,
+  } = params;
+
   const verseCount = calculateVerseCount(startRef, endRef);
-  const readByNames = selectedUserIds.map((userId) => {
-    const member = members.find((m) => m.userId === userId);
+
+  // Only include users that are members of this journey
+  const memberIds = new Set((members || []).map((m) => m.userId));
+  const userIdsForJourney = selectedUserIds.filter((id) => memberIds.has(id));
+
+  const readByNames = userIdsForJourney.map((userId) => {
+    const member = (members || []).find((m) => m.userId === userId);
     return member?.displayName || 'Unknown';
   });
 
-  // 1. Create the reading log entry
   const logData: Omit<ReadingLog, 'id'> = {
     journeyId,
+    readingSessionId,
     loggedBy: currentUserId,
     loggedByName: currentUserName,
-    readBy: selectedUserIds,
+    readBy: userIdsForJourney,
     readByNames,
     startRef,
     endRef,
@@ -64,30 +175,22 @@ export async function logReading(input: LogReadingInput): Promise<void> {
 
   await addDoc(collection(db, 'journeys', journeyId, 'readingLogs'), logData);
 
-  // 2. Track unique verses and update journey stats
   const allVerses = expandVerseRange(startRef, endRef);
 
-  // Check which verses are already completed
   const newVerses: string[] = [];
   for (const verseRef of allVerses) {
     const verseDocRef = doc(db, 'journeys', journeyId, 'verseCompletions', verseRef);
     const verseDoc = await getDoc(verseDocRef);
-
     if (!verseDoc.exists()) {
       newVerses.push(verseRef);
     }
   }
 
-  // 3. Calculate today's total verses for this journey
   const todayVerses = await calculateTodayVerses(journeyId);
-
   const journeyRef = doc(db, 'journeys', journeyId);
 
-  // 4. Update journey stats
   if (newVerses.length > 0) {
     const batch = writeBatch(db);
-
-    // Add verseCompletion documents for new verses
     newVerses.forEach((verseRef) => {
       const verseDocRef = doc(db, 'journeys', journeyId, 'verseCompletions', verseRef);
       batch.set(verseDocRef, {
@@ -97,7 +200,6 @@ export async function logReading(input: LogReadingInput): Promise<void> {
       });
     });
 
-    // Update journey stats with new verse count and today's total
     batch.update(journeyRef, {
       'stats.versesCompleted': increment(newVerses.length),
       'stats.completionPercentage': increment((newVerses.length / 6236) * 100),
@@ -108,7 +210,6 @@ export async function logReading(input: LogReadingInput): Promise<void> {
 
     await batch.commit();
   } else {
-    // Still update lastActivityAt and today's verses even if no new verses
     await updateDoc(journeyRef, {
       'stats.lastActivityAt': serverTimestamp(),
       'stats.versesReadToday': todayVerses,
@@ -116,11 +217,53 @@ export async function logReading(input: LogReadingInput): Promise<void> {
     });
   }
 
-  // 5. Update personal stats for users who participated in this reading
-  await updatePersonalStats(selectedUserIds, verseCount);
+  if (updatePersonal) {
+    await updatePersonalStats(userIdsForJourney, verseCount);
+  }
 
-  // 6. Update member stats in the journey's members subcollection
-  await updateJourneyMemberStats(journeyId, selectedUserIds);
+  await updateJourneyMemberStats(journeyId, userIdsForJourney);
+}
+
+// Public: log a single reading to multiple journeys with deduplicated personal stats.
+export async function logReadingToMultipleJourneys(
+  input: LogReadingMultipleInput
+): Promise<void> {
+  const {
+    journeyIds,
+    currentUserId,
+    currentUserName,
+    selectedUserIds,
+    journeyMembersMap,
+    startRef,
+    endRef,
+    note,
+  } = input;
+
+  if (!journeyIds || journeyIds.length === 0) return;
+
+  const readingSessionId = `session_${Date.now()}_${Math.random()
+    .toString(36)
+    .substr(2, 9)}`;
+  const verseCount = calculateVerseCount(startRef, endRef);
+
+  for (const journeyId of journeyIds) {
+    const members = journeyMembersMap.get(journeyId) || [];
+    await logReadingForJourney({
+      journeyId,
+      readingSessionId,
+      currentUserId,
+      currentUserName,
+      selectedUserIds,
+      members,
+      startRef,
+      endRef,
+      note,
+      updatePersonal: false,
+    });
+  }
+
+  // Update personal stats once for the session (not multiplied by journeys)
+  await updatePersonalStats(selectedUserIds, verseCount);
 }
 
 /**

@@ -218,3 +218,21 @@ export function rangesOverlap(
 export function getCompletionPercentage(versesCompleted: number): number {
   return Math.round((versesCompleted / TOTAL_VERSES) * 100 * 100) / 100; // 2 decimal places
 }
+
+/**
+ * Get the next verse after a given verse reference
+ * Returns null if the given verse is the last verse in the Quran
+ */
+export function getNextVerse(ref: string): string | null {
+  const parsed = parseVerseRef(ref);
+  if (!parsed || !isValidVerseRef(ref)) return null;
+
+  const globalId = getGlobalVerseId(parsed);
+
+  // If this is the last verse in the Quran, return null
+  if (globalId >= TOTAL_VERSES) return null;
+
+  // Get the next verse
+  const nextVerse = getVerseFromGlobalId(globalId + 1);
+  return nextVerse ? formatVerseRef(nextVerse) : null;
+}
