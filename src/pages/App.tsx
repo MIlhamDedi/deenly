@@ -8,6 +8,7 @@ import { NotificationBanner } from '@/components/notifications/NotificationBanne
 import { SettingsModal } from '@/components/settings/SettingsModal';
 import { AppNavbar } from '@/components/navigation/AppNavbar';
 import { MultiJourneyLogReadingModal } from '@/components/journey/MultiJourneyLogReadingModal';
+import { AdBanner } from '@/components/ads/AdBanner';
 import { JourneyMember } from '@/types';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -50,9 +51,14 @@ export function AppPage() {
       <AppNavbar onOpenSettings={() => setShowSettingsModal(true)} />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
         {/* Notification Prompt Banner */}
         <NotificationBanner />
+
+        {/* Ad Banner */}
+        <div className="mb-4">
+          <AdBanner />
+        </div>
 
         {/* Personal Stats Banner */}
         <div className="mb-8">
