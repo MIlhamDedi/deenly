@@ -10,6 +10,7 @@ import {
   query,
   where,
   getDocs,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ReadingLog, JourneyMember } from '@/types';
@@ -283,10 +284,26 @@ async function updatePersonalStats(userIds: string[], verseCount: number): Promi
         totalReadings: 0,
       };
 
-      // Calculate streak
+      const pauses = currentStats.streakPauses || [];
+      const activePauseId = currentStats.activePauseId;
+
+      // Auto-resume if there's an active pause
+      let updatedPauses = pauses;
+      let updatedActivePauseId = activePauseId;
+
+      if (activePauseId) {
+        // End the active pause
+        updatedPauses = pauses.map((p: any) =>
+          p.id === activePauseId ? { ...p, endDate: Timestamp.fromDate(new Date()) } : p
+        );
+        updatedActivePauseId = null;
+      }
+
+      // Calculate streak (with pauses considered)
       const { newStreak } = calculateStreak(
         currentStats.currentStreak,
-        currentStats.lastReadDate || null
+        currentStats.lastReadDate || null,
+        pauses
       );
 
       const newLongestStreak = Math.max(newStreak, currentStats.longestStreak || 0);
@@ -306,6 +323,8 @@ async function updatePersonalStats(userIds: string[], verseCount: number): Promi
         'stats.lastReadDate': serverTimestamp(),
         'stats.todayVersesRead': todayVerses,
         'stats.todayDate': serverTimestamp(),
+        'stats.streakPauses': updatedPauses,
+        'stats.activePauseId': updatedActivePauseId,
       });
     }
   }

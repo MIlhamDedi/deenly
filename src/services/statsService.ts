@@ -1,5 +1,6 @@
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { StreakPause } from '@/types';
 
 /**
  * Calculate total verses read today for a journey by querying reading logs
@@ -30,11 +31,12 @@ export async function calculateTodayVerses(journeyId: string): Promise<number> {
 }
 
 /**
- * Calculate streak information for a user
+ * Calculate streak information for a user (pause-aware)
  */
 export function calculateStreak(
   currentStreak: number,
-  lastReadDate: Timestamp | null
+  lastReadDate: Timestamp | null,
+  pauses?: StreakPause[]
 ): { newStreak: number } {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -46,16 +48,26 @@ export function calculateStreak(
     lastRead.setHours(0, 0, 0, 0);
 
     const diffTime = today.getTime() - lastRead.getTime();
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
       // Same day - keep current streak
       newStreak = currentStreak;
-    } else if (diffDays === 1) {
-      // Yesterday - increment streak
-      newStreak = currentStreak + 1;
+    } else {
+      // Check if the gap is covered by pauses
+      const uncoveredDays = countUncoveredDays(lastRead, today, pauses || []);
+
+      if (uncoveredDays === 0) {
+        // All days covered by pauses - increment streak
+        newStreak = currentStreak + 1;
+      } else if (uncoveredDays === 1) {
+        // Yesterday not covered, but we're reading today - increment streak
+        newStreak = currentStreak + 1;
+      } else {
+        // 2+ uncovered days - streak resets to 1
+        newStreak = 1;
+      }
     }
-    // else: more than 1 day gap - streak resets to 1
   }
 
   return { newStreak };
@@ -103,18 +115,79 @@ export function isToday(date: Date | Timestamp): boolean {
 }
 
 /**
+ * Check if a specific date is covered by any streak pause
+ */
+export function isDateCoveredByPause(date: Date, pauses: StreakPause[]): boolean {
+  if (!pauses || pauses.length === 0) return false;
+
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+
+  return pauses.some(pause => {
+    const start = pause.startDate.toDate();
+    start.setHours(0, 0, 0, 0);
+
+    const end = pause.endDate ? pause.endDate.toDate() : new Date();
+    end.setHours(0, 0, 0, 0);
+
+    return checkDate >= start && checkDate <= end;
+  });
+}
+
+/**
+ * Count uncovered days between two dates (excluding pauses)
+ */
+export function countUncoveredDays(
+  startDate: Date,
+  endDate: Date,
+  pauses: StreakPause[]
+): number {
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+
+  const diffTime = end.getTime() - start.getTime();
+  const totalDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (totalDays <= 0) return 0;
+
+  let uncoveredDays = 0;
+  for (let i = 1; i <= totalDays; i++) {
+    const checkDate = new Date(start);
+    checkDate.setDate(checkDate.getDate() + i);
+
+    if (!isDateCoveredByPause(checkDate, pauses)) {
+      uncoveredDays++;
+    }
+  }
+
+  return uncoveredDays;
+}
+
+/**
  * Get the actual current streak status based on lastReadDate
- * Returns the streak value and its status
+ * Returns the streak value and its status (pause-aware)
  */
 export function getStreakStatus(
   currentStreak: number,
-  lastReadDate: Timestamp | null
+  lastReadDate: Timestamp | null,
+  pauses?: StreakPause[]
 ): {
   actualStreak: number;
-  status: 'active' | 'at-risk' | 'broken';
+  status: 'active' | 'at-risk' | 'broken' | 'paused';
+  isPaused: boolean;
 } {
+  // Check if currently paused
+  const isPaused = pauses?.some(p => p.endDate === null) || false;
+
   if (!lastReadDate || currentStreak === 0) {
-    return { actualStreak: 0, status: 'broken' };
+    return {
+      actualStreak: 0,
+      status: isPaused ? 'paused' : 'broken',
+      isPaused
+    };
   }
 
   const lastRead = lastReadDate.toDate();
@@ -124,16 +197,29 @@ export function getStreakStatus(
   today.setHours(0, 0, 0, 0);
 
   const diffTime = today.getTime() - lastRead.getTime();
-  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  // If currently paused, streak is preserved
+  if (isPaused) {
+    return { actualStreak: currentStreak, status: 'paused', isPaused: true };
+  }
 
   if (diffDays === 0) {
     // Read today - streak is active and safe
-    return { actualStreak: currentStreak, status: 'active' };
-  } else if (diffDays === 1) {
-    // Read yesterday - streak is still valid but at risk (need to read today)
-    return { actualStreak: currentStreak, status: 'at-risk' };
+    return { actualStreak: currentStreak, status: 'active', isPaused: false };
+  }
+
+  // For gaps > 0 days, check if days are covered by pauses
+  const uncoveredDays = countUncoveredDays(lastRead, today, pauses || []);
+
+  if (uncoveredDays === 0) {
+    // All days covered by pauses - streak is active
+    return { actualStreak: currentStreak, status: 'active', isPaused: false };
+  } else if (uncoveredDays === 1) {
+    // Yesterday not covered - at risk (need to read today)
+    return { actualStreak: currentStreak, status: 'at-risk', isPaused: false };
   } else {
-    // More than 1 day - streak is broken
-    return { actualStreak: 0, status: 'broken' };
+    // 2+ uncovered days - streak is broken
+    return { actualStreak: 0, status: 'broken', isPaused: false };
   }
 }

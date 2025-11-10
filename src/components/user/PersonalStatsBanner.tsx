@@ -1,8 +1,16 @@
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { getStreakStatus } from '@/services/statsService';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { StreakActionFeedbackModal } from './StreakActionFeedbackModal';
 
 export function PersonalStatsBanner() {
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
+  const [showMenu, setShowMenu] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackAction, setFeedbackAction] = useState<'pause' | 'resume'>('pause');
 
   if (!userProfile) {
     return null;
@@ -14,13 +22,77 @@ export function PersonalStatsBanner() {
     todayVersesRead: 0,
     todayDate: undefined,
     lastReadDate: null,
+    streakPauses: [],
+    activePauseId: null,
   };
 
-  // Calculate actual streak status
-  const { actualStreak, status: streakStatus } = getStreakStatus(
+  // Calculate actual streak status (pause-aware)
+  const { actualStreak, status: streakStatus, isPaused } = getStreakStatus(
     stats.currentStreak || 0,
-    stats.lastReadDate || null
+    stats.lastReadDate || null,
+    stats.streakPauses
   );
+
+  async function handlePauseStreak() {
+    if (!currentUser || loading) return;
+
+    setLoading(true);
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      const pauseId = `pause_${Date.now()}`;
+
+      const currentPauses = stats.streakPauses || [];
+      const newPause = {
+        id: pauseId,
+        startDate: Timestamp.fromDate(new Date()),
+        endDate: null,
+      };
+
+      await updateDoc(userRef, {
+        'stats.streakPauses': [...currentPauses, newPause],
+        'stats.activePauseId': pauseId,
+      });
+
+      setShowMenu(false);
+
+      // Show feedback modal
+      setFeedbackAction('pause');
+      setShowFeedbackModal(true);
+    } catch (error) {
+      console.error('Failed to pause streak:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResumeStreak() {
+    if (!currentUser || loading || !stats.activePauseId) return;
+
+    setLoading(true);
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+
+      // Update the active pause to set endDate
+      const updatedPauses = (stats.streakPauses || []).map((p: any) =>
+        p.id === stats.activePauseId ? { ...p, endDate: Timestamp.fromDate(new Date()) } : p
+      );
+
+      await updateDoc(userRef, {
+        'stats.streakPauses': updatedPauses,
+        'stats.activePauseId': null,
+      });
+
+      setShowMenu(false);
+
+      // Show feedback modal
+      setFeedbackAction('resume');
+      setShowFeedbackModal(true);
+    } catch (error) {
+      console.error('Failed to resume streak:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Check if todayDate is actually today
   let displayTodayVerses = 0;
@@ -39,21 +111,74 @@ export function PersonalStatsBanner() {
   const dailyGoal = userProfile.settings?.dailyGoal || 50;
 
   return (
-    <div className="bg-gradient-to-r from-teal-600 to-teal-700 dark:from-teal-800 dark:to-teal-900 rounded-2xl p-4 md:p-6 shadow-lg">
-      {/* Title */}
-      <h2 className="text-base md:text-xl font-bold text-white mb-3 md:mb-4">Personal Achievements</h2>
+    <div className="bg-gradient-to-r from-teal-600 to-teal-700 dark:from-teal-800 dark:to-teal-900 rounded-2xl p-4 md:p-6 shadow-lg relative">
+      {/* Title and Menu */}
+      <div className="flex justify-between items-center mb-3 md:mb-4">
+        <h2 className="text-base md:text-xl font-bold text-white">Personal Achievements</h2>
+
+        {/* Kebab Menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+            disabled={loading}
+          >
+            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+            </svg>
+          </button>
+
+          {/* Dropdown Menu */}
+          {showMenu && (
+            <>
+              {/* Backdrop */}
+              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)}></div>
+
+              {/* Menu */}
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-20">
+                {isPaused ? (
+                  <button
+                    onClick={handleResumeStreak}
+                    disabled={loading}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Resume Streak
+                  </button>
+                ) : (
+                  <button
+                    onClick={handlePauseStreak}
+                    disabled={loading}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Pause Streak
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 md:gap-6">
           {/* Current Streak */}
           <div className="flex items-center gap-2 md:gap-3">
             <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${
-              streakStatus === 'at-risk'
+              streakStatus === 'paused'
+                ? 'bg-blue-500/30'
+                : streakStatus === 'at-risk'
                 ? 'bg-orange-500/30 animate-pulse'
                 : 'bg-white/20'
             }`}>
               <span className="text-xl md:text-2xl">
-                {streakStatus === 'at-risk' ? '⚠️' : '🔥'}
+                {streakStatus === 'paused' ? '⏸️' : streakStatus === 'at-risk' ? '⚠️' : '🔥'}
               </span>
             </div>
             <div>
@@ -62,9 +187,16 @@ export function PersonalStatsBanner() {
                 {streakStatus === 'at-risk' && (
                   <span className="ml-1 text-orange-200 font-semibold">• At Risk!</span>
                 )}
+                {streakStatus === 'paused' && (
+                  <span className="ml-1 text-blue-200 font-semibold">• Paused</span>
+                )}
               </p>
               <p className={`text-lg md:text-2xl font-bold ${
-                streakStatus === 'at-risk' ? 'text-orange-200' : 'text-white'
+                streakStatus === 'paused'
+                  ? 'text-blue-200'
+                  : streakStatus === 'at-risk'
+                  ? 'text-orange-200'
+                  : 'text-white'
               }`}>
                 {actualStreak} {actualStreak === 1 ? 'day' : 'days'}
               </p>
@@ -119,9 +251,14 @@ export function PersonalStatsBanner() {
         </div>
 
         {/* Motivational message - Desktop */}
-        {actualStreak === 0 && displayTodayVerses === 0 && (
+        {actualStreak === 0 && displayTodayVerses === 0 && !isPaused && (
           <div className="hidden lg:block text-white/90 text-sm">
             Start your reading journey today! 📖
+          </div>
+        )}
+        {streakStatus === 'paused' && (
+          <div className="hidden lg:block text-blue-200 text-sm font-semibold">
+            Streak paused • Your {actualStreak}-day streak is preserved 🤲
           </div>
         )}
         {streakStatus === 'at-risk' && (
@@ -141,10 +278,17 @@ export function PersonalStatsBanner() {
 
       {/* Motivational message - Mobile (full width row) */}
       <div className="lg:hidden mt-3">
-        {actualStreak === 0 && displayTodayVerses === 0 && (
+        {actualStreak === 0 && displayTodayVerses === 0 && !isPaused && (
           <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
             <p className="text-center text-white font-medium text-sm">
               Start your reading journey today! 📖
+            </p>
+          </div>
+        )}
+        {streakStatus === 'paused' && (
+          <div className="bg-blue-500/30 backdrop-blur-sm rounded-lg px-3 py-2.5 border border-blue-400/50">
+            <p className="text-center text-white font-bold text-sm">
+              ⏸️ Streak paused • Your {actualStreak}-day streak is preserved 🤲
             </p>
           </div>
         )}
@@ -166,6 +310,13 @@ export function PersonalStatsBanner() {
           </div>
         )}
       </div>
+
+      {/* Feedback Modal */}
+      <StreakActionFeedbackModal
+        isOpen={showFeedbackModal}
+        action={feedbackAction}
+        onClose={() => setShowFeedbackModal(false)}
+      />
     </div>
   );
 }

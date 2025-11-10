@@ -19,6 +19,12 @@ export interface UserSettings {
   dailyGoal: number; // daily verses goal (default 50)
 }
 
+export interface StreakPause {
+  id: string;
+  startDate: Timestamp;
+  endDate: Timestamp | null; // null if currently active
+}
+
 export interface UserStats {
   currentStreak: number; // consecutive days with readings
   longestStreak: number; // best streak record
@@ -27,6 +33,8 @@ export interface UserStats {
   lastReadDate?: Timestamp; // last date they logged a reading
   todayVersesRead: number; // verses read today
   todayDate?: Timestamp; // date for today's count (to reset daily)
+  streakPauses?: StreakPause[]; // array of pause periods
+  activePauseId?: string | null; // ID of current pause if active
 }
 
 // Journey (Reading Group) types
