@@ -4,6 +4,8 @@ import { getStreakStatus } from '@/services/statsService';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { StreakActionFeedbackModal } from './StreakActionFeedbackModal';
+import { ReadingHeatmap } from './ReadingHeatmap';
+import { useDailyReadingStats } from '@/hooks/useDailyReadingStats';
 
 export function PersonalStatsBanner() {
   const { userProfile, currentUser } = useAuth();
@@ -11,6 +13,8 @@ export function PersonalStatsBanner() {
   const [loading, setLoading] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackAction, setFeedbackAction] = useState<'pause' | 'resume'>('pause');
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { dailyData, loading: heatmapLoading } = useDailyReadingStats();
 
   if (!userProfile) {
     return null;
@@ -311,12 +315,62 @@ export function PersonalStatsBanner() {
         )}
       </div>
 
+      {/* Expand/Collapse Button */}
+      <div className="mt-4 pt-4 border-t border-white/20">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-center gap-2 text-white/90 hover:text-white text-sm font-medium transition-colors"
+        >
+          <span>{isExpanded ? 'Hide Details' : 'Show Reading Activity'}</span>
+          <svg
+            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Expandable Heatmap Section */}
+      {isExpanded && (
+        <div className="mt-4 pt-4 border-t border-white/20 animate-slideDown">
+          {heatmapLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          ) : (
+            <ReadingHeatmap dailyData={dailyData} />
+          )}
+        </div>
+      )}
+
       {/* Feedback Modal */}
       <StreakActionFeedbackModal
         isOpen={showFeedbackModal}
         action={feedbackAction}
         onClose={() => setShowFeedbackModal(false)}
       />
+
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            max-height: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            max-height: 500px;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
