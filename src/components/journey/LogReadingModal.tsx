@@ -151,8 +151,8 @@ export function LogReadingModal({
           <VerseRangePicker
             onRangeChange={handleRangeChange}
             disabled={loading}
-            initialStartRef={startRef}
-            initialEndRef={endRef}
+            startRef={startRef}
+            endRef={endRef}
           />
         </div>
 

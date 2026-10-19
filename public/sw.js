@@ -1,7 +1,7 @@
 // Deenly Service Worker
 // Handles push notifications and caching
 
-const CACHE_NAME = 'deenly-v1';
+const CACHE_NAME = 'deenly-v4';
 const urlsToCache = [
   '/',
   '/index.html',

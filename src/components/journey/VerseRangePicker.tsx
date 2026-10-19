@@ -1,99 +1,51 @@
-import { useState, useEffect } from 'react';
 import { QURAN_SURAHS } from '@/lib/quranData';
 import { validateVerseRange, calculateVerseCount, formatVerseRange, parseVerseRef } from '@/lib/verseUtils';
 
 interface VerseRangePickerProps {
+  startRef: string;
+  endRef: string;
   onRangeChange: (startRef: string, endRef: string, isValid: boolean) => void;
   disabled?: boolean;
-  initialStartRef?: string;
-  initialEndRef?: string;
 }
 
 export function VerseRangePicker({
+  startRef,
+  endRef,
   onRangeChange,
   disabled = false,
-  initialStartRef,
-  initialEndRef
 }: VerseRangePickerProps) {
-  // Parse initial values if provided
-  const getInitialValues = () => {
-    const startParsed = initialStartRef ? parseVerseRef(initialStartRef) : null;
-    const endParsed = initialEndRef ? parseVerseRef(initialEndRef) : null;
-
-    return {
-      startSurah: startParsed?.surah || 1,
-      startVerse: startParsed?.verse || 1,
-      endSurah: endParsed?.surah || 1,
-      endVerse: endParsed?.verse || 1,
-    };
-  };
-
-  const initial = getInitialValues();
-  const [startSurah, setStartSurah] = useState<number>(initial.startSurah);
-  const [startVerse, setStartVerse] = useState<number>(initial.startVerse);
-  const [endSurah, setEndSurah] = useState<number>(initial.endSurah);
-  const [endVerse, setEndVerse] = useState<number>(initial.endVerse);
-  const [error, setError] = useState<string | null>(null);
-
-  // Update state when initial values change
-  useEffect(() => {
-    const newInitial = getInitialValues();
-    setStartSurah(newInitial.startSurah);
-    setStartVerse(newInitial.startVerse);
-    setEndSurah(newInitial.endSurah);
-    setEndVerse(newInitial.endVerse);
-  }, [initialStartRef, initialEndRef]);
-
-  // Get verse count for selected surahs
+  const start = parseVerseRef(startRef);
+  const end = parseVerseRef(endRef);
+  const startSurah = start?.surah || 1;
+  const startVerse = start?.verse || 1;
+  const endSurah = end?.surah || 1;
+  const endVerse = end?.verse || 1;
   const startSurahData = QURAN_SURAHS.find((s) => s.number === startSurah);
   const endSurahData = QURAN_SURAHS.find((s) => s.number === endSurah);
+  const error = validateVerseRange(startRef, endRef);
 
-  // Update verse dropdowns when surah changes
-  useEffect(() => {
-    if (startVerse > (startSurahData?.verses || 1)) {
-      setStartVerse(1);
-    }
-  }, [startSurah, startSurahData]);
+  function updateRange(
+    nextStartSurah: number,
+    nextStartVerse: number,
+    nextEndSurah: number,
+    nextEndVerse: number
+  ) {
+    const startVerseLimit = QURAN_SURAHS.find((s) => s.number === nextStartSurah)?.verses || 1;
+    const endVerseLimit = QURAN_SURAHS.find((s) => s.number === nextEndSurah)?.verses || 1;
+    const adjustedStartVerse = nextStartVerse > startVerseLimit ? 1 : nextStartVerse;
+    const adjustedEndVerse = Math.min(nextEndVerse, endVerseLimit);
+    const endBeforeStart = nextEndSurah < nextStartSurah ||
+      (nextEndSurah === nextStartSurah && adjustedEndVerse < adjustedStartVerse);
+    const nextStartRef = `${nextStartSurah}:${adjustedStartVerse}`;
+    const nextEndRef = endBeforeStart
+      ? nextStartRef
+      : `${nextEndSurah}:${adjustedEndVerse}`;
 
-  useEffect(() => {
-    if (endVerse > (endSurahData?.verses || 1)) {
-      setEndVerse(endSurahData?.verses || 1);
-    }
-  }, [endSurah, endSurahData]);
+    onRangeChange(nextStartRef, nextEndRef, !validateVerseRange(nextStartRef, nextEndRef));
+  }
 
-  // Auto-adjust end verse when start verse changes (prevent reading backwards)
-  useEffect(() => {
-    // Check if end is before start
-    if (startSurah > endSurah) {
-      // Start surah is after end surah - update end to match start
-      setEndSurah(startSurah);
-      setEndVerse(startVerse);
-    } else if (startSurah === endSurah && startVerse > endVerse) {
-      // Same surah but start verse is after end verse - update end verse
-      setEndVerse(startVerse);
-    }
-  }, [startSurah, startVerse, endSurah, endVerse]);
-
-  // Validate and notify parent of changes
-  useEffect(() => {
-    const startRef = `${startSurah}:${startVerse}`;
-    const endRef = `${endSurah}:${endVerse}`;
-
-    const validationError = validateVerseRange(startRef, endRef);
-    setError(validationError);
-
-    onRangeChange(startRef, endRef, !validationError);
-  }, [startSurah, startVerse, endSurah, endVerse, onRangeChange]);
-
-  const verseCount = error ? 0 : calculateVerseCount(
-    `${startSurah}:${startVerse}`,
-    `${endSurah}:${endVerse}`
-  );
-
-  const rangeDisplay = !error ? formatVerseRange(
-    `${startSurah}:${startVerse}`,
-    `${endSurah}:${endVerse}`
-  ) : '';
+  const verseCount = error ? 0 : calculateVerseCount(startRef, endRef);
+  const rangeDisplay = error ? '' : formatVerseRange(startRef, endRef);
 
   return (
     <div className="space-y-4">
@@ -107,7 +59,7 @@ export function VerseRangePicker({
             <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Surah</label>
             <select
               value={startSurah}
-              onChange={(e) => setStartSurah(Number(e.target.value))}
+              onChange={(e) => updateRange(Number(e.target.value), startVerse, endSurah, endVerse)}
               disabled={disabled}
               className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
             >
@@ -122,7 +74,7 @@ export function VerseRangePicker({
             <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Verse</label>
             <select
               value={startVerse}
-              onChange={(e) => setStartVerse(Number(e.target.value))}
+              onChange={(e) => updateRange(startSurah, Number(e.target.value), endSurah, endVerse)}
               disabled={disabled}
               className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
             >
@@ -146,7 +98,7 @@ export function VerseRangePicker({
             <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Surah</label>
             <select
               value={endSurah}
-              onChange={(e) => setEndSurah(Number(e.target.value))}
+              onChange={(e) => updateRange(startSurah, startVerse, Number(e.target.value), endVerse)}
               disabled={disabled}
               className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
             >
@@ -161,7 +113,7 @@ export function VerseRangePicker({
             <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Verse</label>
             <select
               value={endVerse}
-              onChange={(e) => setEndVerse(Number(e.target.value))}
+              onChange={(e) => updateRange(startSurah, startVerse, endSurah, Number(e.target.value))}
               disabled={disabled}
               className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
             >

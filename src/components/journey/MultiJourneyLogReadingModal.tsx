@@ -170,6 +170,8 @@ export function MultiJourneyLogReadingModal({
         {/* Verse Range Picker */}
         <div>
           <VerseRangePicker
+            startRef={startRef}
+            endRef={endRef}
             onRangeChange={handleRangeChange}
             disabled={loading}
           />
