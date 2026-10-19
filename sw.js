@@ -2,7 +2,7 @@
 // Handles push notifications and caching
 
 // Bump version to invalidate old, potentially stale caches
-const CACHE_NAME = 'deenly-v3';
+const CACHE_NAME = 'deenly-v4';
 
 // Resolve base path from SW scope so it works under subpaths
 const BASE_PATH = new URL(self.registration.scope).pathname;
