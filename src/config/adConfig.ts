@@ -30,7 +30,7 @@ export const ADS: AdConfig[] = [
   {
     id: 'afternoon-almatsurat',
     title: 'End Your Day with Afternoon Almatsurat 🌆',
-    actionUrl: 'https://open.spotify.com/track/4Jyna2ySg6BdL8HFJ2aFNR?si=2e4027b5da184f83',
+    actionUrl: 'https://open.spotify.com/episode/2zTg3Y9bMn5DHYJFV8K5DV?si=7330c406389d4d11',
     backgroundImage: 'https://images.unsplash.com/photo-1713239060784-e6ed820a0715',
     isSponsored: false,
     showCondition: () => {
